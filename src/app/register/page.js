@@ -65,7 +65,9 @@ const RegisterPage = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit">Register</button>
+        <button type="submit" disabled={creatingUser}>
+          Register
+        </button>
 
         <div className="my-2 text-center text-gray-500">
           or login with provider

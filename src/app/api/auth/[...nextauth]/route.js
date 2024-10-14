@@ -2,37 +2,52 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import NextAuth from "next-auth";
 import { User } from "@/app/models/user";
-import CredentialsProvider from "next-auth/providers/credentials"
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google"
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
 
-const handler = NextAuth({
+export const authOptions = {
   secret: process.env.SECRET,
-    providers: [
-        CredentialsProvider({
 
-          name: 'Credentials',
-          id: 'credentials',
+  // adapter: MongoDBAdapter(clientPromimse),
 
-          credentials: {
-            username: { label: "Email", type: "email", placeholder: "test@example.com" },
-            password: { label: "Password", type: "password" }
-          },
+  providers: [
+    GoogleProvider({
+      clientId:process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    CredentialsProvider({
+      name: "Credentials",
+      id: "credentials",
 
-          async authorize(credentials, req) {
-            const email = credentials?.email;
-            const password = credentials?.password;
+      credentials: {
+        username: {
+          label: "Email",
+          type: "email",
+          placeholder: "test@example.com",
+        },
+        password: { label: "Password", type: "password" },
+      },
 
-            mongoose.connect(process.env.MONGO_URL);
-            const user = await User.findOne({email});
-            const passwordOk = user && bcrypt.compareSync(password, user.password);
+      async authorize(credentials, req) {
+        const email = credentials?.email;
+        const password = credentials?.password;
 
-            if (passwordOk) {
-              return user;
-            }
+        mongoose.connect(process.env.MONGO_URL);
+        const user = await User.findOne({ email });
+        const passwordOk = user && bcrypt.compareSync(password, user.password);
 
-            return null
-          }
-        })
-      ]
-})
+        if (passwordOk) {
+          return user;
+        }
 
-export { handler as GET, handler as POST }
+        return null;
+      },
+    }),
+  ],
+}
+
+const handler = NextAuth(authOptions);
+
+
+export { handler as GET, handler as POST };
