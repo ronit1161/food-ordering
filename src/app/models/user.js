@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { Schema, model, models } from "mongoose";
 
 const UserSchema = new Schema({
+  name: String,
   email: {
     type: String,
     required: true,
@@ -16,6 +17,9 @@ const UserSchema = new Schema({
       }
     },
   },
+  image: {
+    type: String,
+  }
 }, { timestamps: true });
 
 UserSchema.post('validate', (user) => {
