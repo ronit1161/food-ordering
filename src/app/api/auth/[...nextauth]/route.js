@@ -57,21 +57,22 @@ export const authOptions = {
     // Save user information to token
     async jwt({ token, user }) {
       if (user) {
-        // First login - add user info to token
-        token.id = user._id; // MongoDB user ID
-        token.name = user.name; // User's name from MongoDB
-        token.email = user.email; // User's email
+        token.id = user._id;  // MongoDB user ID
+        token.name = user.name;
+        token.email = user.email;
+        token.admin = user.admin;  // Ensure admin is added here
       }
       return token;
     },
-
-    // Attach token data to session
+    
     async session({ session, token }) {
-      session.user.id = token.id; // Attach MongoDB user ID
-      session.user.name = token.name; // Attach user's name
-      session.user.email = token.email; // Attach user's email
+      session.user.id = token.id;
+      session.user.name = token.name;
+      session.user.email = token.email;
+      session.user.admin = token.admin;  // Ensure admin is transferred here
       return session;
     },
+
   },
 
   session: {
