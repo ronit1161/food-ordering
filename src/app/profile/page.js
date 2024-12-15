@@ -34,20 +34,20 @@ const ProfilePage = () => {
     }
   }, [status, router]);
 
-  const handleProfileInfoUpdate = async (e) => {
+  const handleProfileInfoUpdate = async (e, data) => {
     e.preventDefault();
-    let imageUrl = image;
-    if (image && typeof image === "object" && image.link) {
-      imageUrl = image.link;
+    let imageUrl = data.image;
+    if (data.image && typeof data.image === "object" && data.image.link) {
+      imageUrl = data.image.link;
     }
-
+  
     try {
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, image: imageUrl }),
       });
-
+  
       if (response.ok) {
         const updatedSession = await getSession();
         toast.success("Profile updated successfully!", {

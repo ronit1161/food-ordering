@@ -11,16 +11,26 @@ export async function PUT(request) {
 
     // Parse the request body
     const data = await request.json();
-    const { name, image, ...otherUserInfo } = data;
+    const { _id, name, image, ...otherUserInfo } = data;
 
-    const session = await getServerSession(authOptions);
-    const email = session.user.email;
+    let filter = {};
+
+    if (_id) {
+      filter = { _id };
+    } else {
+      const session = await getServerSession(authOptions);
+      const email = session.user.email;
+
+      filter = { email };
+    }
 
     // Update the User's name and image
-    await User.updateOne({ email }, { name, image });
+    await User.updateOne(filter, { name, image });
 
     // Update the UserInfo collection, create new entry if it doesn't exist
-    await UserInfo.findOneAndUpdate({ email }, otherUserInfo, { upsert: true });
+    await UserInfo.findOneAndUpdate(filter, otherUserInfo, {
+      upsert: true,
+    });
 
     // Logging for debugging purposes
     if (name) {
@@ -35,25 +45,47 @@ export async function PUT(request) {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGO_URL);
 
-    // Get session data
-    const session = await getServerSession(authOptions);
-    const email = session?.user?.email;
+    // Create a new URL object from the request URL
+    const url = new URL(request.url);
+    const _id = url.searchParams.get("_id");
 
-    if (!email) {
-      return new Response(JSON.stringify({}), { status: 200 });
+    let user = null;
+    let userInfo = null;
+
+    if (_id) {
+      // Fetch user and userInfo from the database using _id
+      user = await User.findOne({ _id }).lean();
+      if (user) {
+        userInfo = await UserInfo.findOne({ email: user.email }).lean();
+      }
+    } else {
+      // Get session data
+      const session = await getServerSession(authOptions);
+      const email = session?.user?.email;
+
+      if (!email) {
+        return new Response(JSON.stringify({}), { status: 200 });
+      }
+
+      // Fetch user and userInfo from the database using email
+      user = await User.findOne({ email }).lean();
+      userInfo = await UserInfo.findOne({ email }).lean();
     }
 
-    // Fetch user and userInfo from the database
-    const user = await User.findOne({ email }).lean();
-    const userInfo = await UserInfo.findOne({ email }).lean();
+    // If the user or userInfo is not found, return an empty response
+    if (!user || !userInfo) {
+      return new Response(JSON.stringify({}), { status: 404 });
+    }
 
     // Return merged user and userInfo data
-    return new Response(JSON.stringify({ ...user, ...userInfo }), { status: 200 });
+    return new Response(JSON.stringify({ ...user, ...userInfo }), {
+      status: 200,
+    });
   } catch (error) {
     console.error("Error in GET request:", error);
     return new Response("Failed to fetch data", { status: 500 });

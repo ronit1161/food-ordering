@@ -1,3 +1,4 @@
+'use client'
 import MenuItem from "../menu/MenuItem";
 import SectionHeaders from "./SectionHeaders";
 
@@ -6,8 +7,8 @@ export const HomeMenu = () => {
     <section className="relative pt-10">
       <div className="text-center mb-8">
         <SectionHeaders 
-        subHeader={"Checkout"} 
-        mainHeader={"Menu"} 
+        subHeader={"Check out"} 
+        mainHeader={"Our best sellers"} 
         />
       </div>
       <div className="grid grid-cols-3 gap-4">

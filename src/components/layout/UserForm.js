@@ -1,6 +1,7 @@
 "use client";
+import { UseProfile } from "../UseProfile";
 import EditableImage from "./EditableImage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const UserForm = ({ user, OnSave }) => {
   const [userName, setUserName] = useState(user?.name || "");
@@ -9,6 +10,20 @@ const UserForm = ({ user, OnSave }) => {
   const [address, setAddress] = useState(user?.address || "");
   const [postalCode, setPostalCode] = useState(user?.postalCode || "");
   const [city, setCity] = useState(user?.city || "");
+  const [admin, setAdmin] = useState(user?.admin || false);
+  const { data: loggedInUserData } = UseProfile();
+
+  useEffect(() => {
+    if (user) {
+      setUserName(user.name || "");
+      setImage(user.image || "");
+      setPhone(user.phone || "");
+      setAddress(user.address || "");
+      setPostalCode(user.postalCode || "");
+      setCity(user.city || "");
+    }
+  }, [user]);
+
   return (
     <div className="flex gap-4">
       <div>
@@ -26,7 +41,6 @@ const UserForm = ({ user, OnSave }) => {
             phone,
             address,
             city,
-            country,
             postalCode,
           })
         }
@@ -39,11 +53,7 @@ const UserForm = ({ user, OnSave }) => {
           onChange={(e) => setUserName(e.target.value)}
         />
         <label>User email</label>
-        <input
-          type="email"
-          disabled={true}
-          value={user?.email}
-        />
+        <input type="email" disabled={true} value={user?.email} />
         <label>Phone number</label>
         <input
           type="tel"
@@ -58,7 +68,7 @@ const UserForm = ({ user, OnSave }) => {
           value={address}
           onChange={(e) => setAddress(e.target.value)}
         />
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div>
             <label>City</label>
             <input
@@ -80,6 +90,25 @@ const UserForm = ({ user, OnSave }) => {
             />
           </div>
         </div>
+        {loggedInUserData.admin && (
+          <div>
+            <label
+              className="p-2 inline-flex items-center gap-2 mb-2"
+              htmlFor="adminCb"
+            >
+              <input
+                id="adminCb"
+                type="checkbox"
+                className=""
+                value={"1"}
+                checked={admin}
+                onClick={(e) => e.target.checked}
+              />
+              <span>Admin</span>
+            </label>
+          </div>
+        )}
+
         <button type="submit">Save</button>
       </form>
     </div>
