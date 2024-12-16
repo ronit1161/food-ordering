@@ -35,9 +35,9 @@ export default function Header() {
             LOGO
           </Link>
           <Link href={"/"}>Home</Link>
-          <Link href={""}>Menu</Link>
-          <Link href={""}>About</Link>
-          <Link href={""}>Contact</Link>
+          <Link href={"/menu"}>Menu</Link>
+          <Link href={"/#about"}>About</Link>
+          <Link href={"/#about"}>Contact</Link>
         </nav>
 
         <nav className="flex items-center font-semibold gap-4">
