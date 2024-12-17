@@ -7,20 +7,6 @@ export default function EditableImage({ link, setLink }) {
 
     if (files?.length > 0) {
       const file = files[0];
-      
-      // Optional: You can add file size/format validation here
-      const maxSize = 5 * 1024 * 1024; // 5MB limit
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-
-      if (file.size > maxSize) {
-        toast.error("File size exceeds 5MB");
-        return;
-      }
-
-      if (!allowedTypes.includes(file.type)) {
-        toast.error("Invalid file type. Only JPEG, PNG, and GIF are allowed.");
-        return;
-      }
 
       const data = new FormData();
       data.append("file", file);

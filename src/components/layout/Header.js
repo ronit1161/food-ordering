@@ -1,6 +1,8 @@
 "use client";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useContext } from "react";
+import { CartContext } from "../AppContext";
 
 
 export default function Header() {
@@ -12,20 +14,7 @@ export default function Header() {
 
   let userName = userData?.name || userData?.email;  
 
-  
-  ///// For email where name is not present.
-
-  // if (userName && userName.includes(" ")) {
-  //   userName = userName.split(" ")[0];
-  // }
-
-  // if (userName && userName.includes("@")) {
-  //   // Split at the "@" and take the first part (username)
-  //   userName = userName.split("@")[0];  // Get "john.doe"
-  
-  //   // Replace all dots (.) with spaces
-  //   userName = userName.replace(/\./g, " ");  // Convert "john.doe" -> "john doe"
-  // }
+  const {cartProducts} = useContext(CartContext);
 
   return (
     <>
@@ -65,6 +54,7 @@ export default function Header() {
               </Link>
             </>
           )}
+            <Link href={'/cart'}>Cart ({cartProducts.length})</Link>
         </nav>
       </header>
     </>

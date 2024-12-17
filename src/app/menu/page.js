@@ -17,6 +17,7 @@ const MenuPage = () => {
       res.json().then((menuItems) => setMenuItems(menuItems));
     });
   }, []);
+  
   return (
     <section className="mt-8">
       {categories?.length > 0 &&
