@@ -54,7 +54,6 @@ const AppContext = ({ children }) => {
           addToCart,
           removeCartProduct,
           clearCart,
-
         }}
       >
         {children}
