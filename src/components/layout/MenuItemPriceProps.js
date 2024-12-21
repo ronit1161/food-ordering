@@ -42,7 +42,8 @@ const MenuItemPriceProps = ({ name, addLabel, props, setProps }) => {
       <div className={isOpen ? 'block' : 'hidden'}>
         {props?.length > 0 &&
           props.map((size, index) => (
-            <div className="flex gap-2 items-end">
+            <div className="flex gap-2 items-end"
+            key={index}>
               <div>
                 <label>Name</label>
                 <input

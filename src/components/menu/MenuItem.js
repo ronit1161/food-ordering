@@ -91,8 +91,11 @@ export default function MenuItem({
               {sizes?.length > 0 && (
                 <div className="p-2">
                   <h3 className="text-center text-gray-700">Pick your size</h3>
-                  {sizes.map((size) => (
-                    <label className="flex items-center gap-2 p-4 border rounded-md mb-1">
+                  {sizes.map((size, index) => (
+                    <label
+                      className="flex items-center gap-2 p-4 border rounded-md mb-1"
+                      key={index}
+                    >
                       <input
                         type="radio"
                         name="size"
@@ -107,8 +110,11 @@ export default function MenuItem({
               {extraIngredientPrices?.length > 0 && (
                 <div className="p-2">
                   <h3 className="text-center text-gray-700">Any Extras ?</h3>
-                  {extraIngredientPrices.map((extraThing) => (
-                    <label className="flex items-center gap-2 p-4 border rounded-md mb-1">
+                  {extraIngredientPrices.map((extraThing, index) => (
+                    <label
+                      className="flex items-center gap-2 p-4 border rounded-md mb-1"
+                      key={index}
+                    >
                       <input
                         type="checkbox"
                         name={extraThing.name}

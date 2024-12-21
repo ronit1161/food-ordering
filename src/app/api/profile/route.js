@@ -4,10 +4,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route"; // Import authOptions
 import { UserInfo } from "@/app/models/userInfo";
 
+
 export async function PUT(request) {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(process.env.NEXT_MONGO_URL);
 
     // Parse the request body
     const data = await request.json();
@@ -19,7 +20,11 @@ export async function PUT(request) {
       filter = { _id };
     } else {
       const session = await getServerSession(authOptions);
-      const email = session.user.email;
+      const email = session?.user?.email;
+
+      if (!email) {
+        return new Response("Unauthorized", { status: 401 });
+      }
 
       filter = { email };
     }
@@ -45,10 +50,11 @@ export async function PUT(request) {
   }
 }
 
+// GET request - Fetch User and UserInfo
 export async function GET(request) {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(process.env.NEXT_MONGO_URL);
 
     // Create a new URL object from the request URL
     const url = new URL(request.url);

@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 // Helper function to connect to the database
 async function connectDB() {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(process.env.NEXT_MONGO_URL);
   }
 }
 

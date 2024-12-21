@@ -22,7 +22,7 @@ const MenuPage = () => {
     <section className="mt-8">
       {categories?.length > 0 &&
         categories.map((c) => (
-          <div>
+          <div key={c.name}>
             <div className="text-center">
               <SectionHeaders subHeader={c.name} />
             </div>
@@ -30,7 +30,7 @@ const MenuPage = () => {
               {menuItems
                 .filter((item) => item.category === c._id)
                 .map((item) => (
-                  <MenuItem {...item} />
+                  <MenuItem {...item} key={item.id} />
                 ))}
             </div>
           </div>

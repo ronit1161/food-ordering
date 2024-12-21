@@ -4,7 +4,7 @@ import { UseProfile } from "@/components/UseProfile";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const usersPage = () => {
+const UsersPage = () => {
   const [users, setUsers] = useState([]);
 
   const { loading, data } = UseProfile();
@@ -32,7 +32,8 @@ const usersPage = () => {
       <div className="mt-8">
         {users.length > 0 &&
           users.map((user) => (
-            <div className="bg-gray-100 rounded-lg mb-2 p-1 px-4 flex items-center gap-4">
+            <div className="bg-gray-100 rounded-lg mb-2 p-1 px-4 flex items-center gap-4"
+            key={user.email}>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 grow">
                 <div className="text-gray-900">
@@ -56,4 +57,4 @@ const usersPage = () => {
   );
 };
 
-export default usersPage;
+export default UsersPage;

@@ -1,34 +1,26 @@
-import bcrypt from "bcrypt";
-import { Schema, model, models } from "mongoose";
+// src/app/models/user.js
+const mongoose = require('mongoose');
 
-const UserSchema = new Schema(
-  {
-    name: String,
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    password: {
-      type: String,
-      required: true,
-      validate: (pass) => {
-        if (!pass?.length || pass.length < 5) {
-          throw new Error("Password must be at least 5 characters");
-        }
-      },
-    },
-    image: {
-      type: String,
-    },
-  },
-  { timestamps: true }
-);
+/**
+ * @typedef {Object} IUser
+ * @property {string} email
+ * @property {string} password
+ * @property {string} name
+ * @property {boolean} admin
+ */
 
-UserSchema.post("validate", (user) => {
-  const notHashedPassword = user.password;
-  const salt = bcrypt.genSaltSync(10);
-  user.password = bcrypt.hashSync(notHashedPassword, salt);
+/**
+ * User Schema for MongoDB
+ * @type {mongoose.Schema<IUser>}
+ */
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  name: { type: String, required: true },
+  admin: { type: Boolean, default: false },
 });
 
-export const User = models?.User || model("User", UserSchema);
+// Create a model based on the schema
+const User = mongoose.model('User', userSchema);
+
+module.exports = { User };

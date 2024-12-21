@@ -23,8 +23,8 @@ export const HomeMenu = () => {
         />
       </div>
       <div className="grid grid-cols-3 gap-4">
-        {bestSellers?.length > 0 && bestSellers.map(item => (
-          <MenuItem {...item}/>
+        {bestSellers?.length > 0 && bestSellers.map((item) => (
+          <MenuItem {...item} key={item.index}/>
         ))}
       </div>
     </section>

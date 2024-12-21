@@ -4,7 +4,7 @@ import { MenuItem } from "../../models/MenuItem";
 export async function POST(req) {
   try {
     // Ensure mongoose is connected
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(process.env.NEXT_MONGO_URL);
 
     const data = await req.json();
 
@@ -31,7 +31,7 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-  mongoose.connect(process.env.MONGO_URL);
+  mongoose.connect(process.env.NEXT_MONGO_URL);
   const { _id, description, basePrice, ...data } = await req.json();
 
   // Ensure that the required fields are provided during the update
@@ -48,14 +48,14 @@ export async function PUT(req) {
 }
 
 export async function GET() {
-  mongoose.connect(process.env.MONGO_URL);
+  mongoose.connect(process.env.NEXT_MONGO_URL);
   return Response.json(await MenuItem.find());
 }
 
 export async function DELETE(req) {
   try {
     // Ensure mongoose is connected
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(process.env.NEXT_MONGO_URL);
 
     // Extract _id from query parameters
     const url = new URL(req.url);

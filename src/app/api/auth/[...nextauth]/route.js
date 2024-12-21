@@ -10,12 +10,12 @@ import clientPromise from "../../../../libs/mongoConnect.js"
 export const authOptions = {
   
   adapter: MongoDBAdapter(clientPromise), // Uncomment if using the MongoDB adapter
-  secret: process.env.SECRET,
+  secret: process.env.NEXT_SECRET,
 
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.NEXT_GOOGLE_CLIENT_ID,
+      clientSecret: process.env.NEXT_GOOGLE_CLIENT_SECRET,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -34,13 +34,17 @@ export const authOptions = {
         const email = credentials?.email;
         const password = credentials?.password;
 
-        await mongoose.connect(process.env.MONGO_URL);
+        // Connect to MongoDB
+        await mongoose.connect(process.env.NEXT_MONGO_URL);
+
+        // Find user by email
         const user = await User.findOne({ email });
 
         if (!user) {
           throw new Error("No user found with the email.");
         }
 
+        // Compare password
         const passwordOk = bcrypt.compareSync(password, user.password);
 
         if (passwordOk) {
@@ -80,7 +84,7 @@ export const authOptions = {
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET, // Ensure a JWT secret is set
+    secret: process.env.NEXT_JWT_SECRET, // Ensure a JWT secret is set
   },
 };
 
