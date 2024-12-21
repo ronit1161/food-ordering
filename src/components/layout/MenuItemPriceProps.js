@@ -1,4 +1,7 @@
 import { useState } from "react";
+import ChevronDown from '@/components/icons/ChevronDown'
+import ChevronUp from '@/components/icons/ChevronUp'
+import Trash from '@/components/icons/Trash'
 
 const MenuItemPriceProps = ({ name, addLabel, props, setProps }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,8 +33,8 @@ const MenuItemPriceProps = ({ name, addLabel, props, setProps }) => {
         type="button"
         onClick={() => setIsOpen(prev => ! prev)}
     >
-        {isOpen && <>^ </>}
-        {!isOpen && <>* </>}
+        {isOpen && <><ChevronUp /></>}
+        {!isOpen && <><ChevronDown /></>}
         <span> {name}</span>
         <span>({props?.length})</span>
       </button>
@@ -66,7 +69,7 @@ const MenuItemPriceProps = ({ name, addLabel, props, setProps }) => {
                   onClick={() => removeProp(index)}
                   className="bg-white mb-2"
                 >
-                  x
+                  <Trash />
                 </button>
               </div>
             </div>

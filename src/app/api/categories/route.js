@@ -9,39 +9,31 @@ async function connectDB() {
   }
 }
 
+// POST: Create a new category
 export async function POST(req) {
   try {
-    await mongoose.connect(process.env.MONGO_URL);
+    // Ensure MongoDB is connected
+    await connectDB();
 
-    const data = await req.json();
+    // Parse the request body
+    const { name } = await req.json();
 
-    // Validate required fields
-    if (!data.name || !data.description || !data.basePrice) {
-      return new Response(
-        JSON.stringify({ error: "Name, Description, and Base Price are required" }),
+    // Validate input
+    if (!name) {
+      return NextResponse.json(
+        { error: "Category name must be provided" },
         { status: 400 }
       );
     }
 
-    // Validate if the category exists
-    const category = await Category.findById(data.category);
-    if (!category) {
-      return new Response(
-        JSON.stringify({ error: "Invalid category" }),
-        { status: 400 }
-      );
-    }
+    // Create and save the new category
+    const newCategory = new Category({ name });
+    await newCategory.save();
 
-    // Create and save the new MenuItem
-    const menuItemDoc = await MenuItem.create(data);
-
-    return new Response(JSON.stringify(menuItemDoc), { status: 201 });
+    return NextResponse.json({ success: true, category: newCategory }, { status: 201 });
   } catch (error) {
-    console.error("Error creating menu item:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
