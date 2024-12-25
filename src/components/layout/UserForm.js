@@ -1,118 +1,91 @@
-"use client";
-import { UseProfile } from "../UseProfile";
-import EditableImage from "./EditableImage";
-import { useEffect, useState } from "react";
+'use client';
+import AddressInputs from "@/components/layout/AddressInputs";
+import EditableImage from "@/components/layout/EditableImage";
+import { UseProfile } from "@/components/UseProfile";
+import { useState, useEffect } from "react";
 
-const UserForm = ({ user, OnSave }) => {
-  const [userName, setUserName] = useState(user?.name || "");
-  const [image, setImage] = useState(user?.image || "");
-  const [phone, setPhone] = useState(user?.phone || "");
-  const [address, setAddress] = useState(user?.address || "");
-  const [postalCode, setPostalCode] = useState(user?.postalCode || "");
-  const [city, setCity] = useState(user?.city || "");
+export default function UserForm({ user, onSave }) {
+  const { data: loggedInUserData } = UseProfile(); // Properly using the hook here
+  const [userName, setUserName] = useState(user?.name || '');
+  const [image, setImage] = useState(user?.image || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [streetAddress, setStreetAddress] = useState(user?.streetAddress || '');
+  const [postalCode, setPostalCode] = useState(user?.postalCode || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [country, setCountry] = useState(user?.country || '');
   const [admin, setAdmin] = useState(user?.admin || false);
-  const { data: loggedInUserData } = UseProfile();
 
+  // If loggedInUserData is available, use it to set the form fields
   useEffect(() => {
-    if (user) {
-      setUserName(user.name || "");
-      setImage(user.image || "");
-      setPhone(user.phone || "");
-      setAddress(user.address || "");
-      setPostalCode(user.postalCode || "");
-      setCity(user.city || "");
+    if (loggedInUserData) {
+      setUserName(loggedInUserData.name || '');
+      setImage(loggedInUserData.image || '');
+      setPhone(loggedInUserData.phone || '');
+      setStreetAddress(loggedInUserData.streetAddress || '');
+      setPostalCode(loggedInUserData.postalCode || '');
+      setCity(loggedInUserData.city || '');
+      setCountry(loggedInUserData.country || '');
+      setAdmin(loggedInUserData.admin || false);
     }
-  }, [user]);
+  }, [loggedInUserData]); // Depend on loggedInUserData
+
+  function handleAddressChange(propName, value) {
+    if (propName === 'phone') setPhone(value);
+    if (propName === 'streetAddress') setStreetAddress(value);
+    if (propName === 'postalCode') setPostalCode(value);
+    if (propName === 'city') setCity(value);
+    if (propName === 'country') setCountry(value);
+  }
 
   return (
-    <div className="flex gap-4">
+    <div className="md:flex gap-4">
       <div>
-        <div className="bg-gray-100 p-2 rounded-lg max-w-[120px] min-w-[100px]">
+        <div className="p-2 rounded-lg relative max-w-[120px]">
           <EditableImage link={image} setLink={setImage} />
         </div>
       </div>
-
       <form
         className="grow"
-        onSubmit={(e) =>
-          OnSave(e, {
-            name: userName,
-            image,
-            phone,
-            address,
-            city,
-            postalCode,
+        onSubmit={ev =>
+          onSave(ev, {
+            name: userName, image, phone, admin,
+            streetAddress, city, country, postalCode,
           })
         }
       >
-        <label>First name and last name</label>
+        <label>First and last name</label>
         <input
           type="text"
-          placeholder="first and last name"
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
+          placeholder="First and last name"
+          value={userName} onChange={ev => setUserName(ev.target.value)}
         />
-        <label>User email</label>
-        <input type="email" disabled={true} value={user?.email} />
-        <label>Phone number</label>
+        <label>Email</label>
         <input
-          type="tel"
-          placeholder="Phone Number"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          type="email"
+          disabled={true}
+          value={user?.email || loggedInUserData?.email || ''}
+          placeholder="email"
         />
-        <label>Address</label>
-        <input
-          type="text"
-          placeholder="Address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+        <AddressInputs
+          addressProps={{ phone, streetAddress, postalCode, city, country }}
+          setAddressProp={handleAddressChange}
         />
-        <div className="grid grid-cols-2 gap-2">
+        {loggedInUserData?.admin && (
           <div>
-            <label>City</label>
-            <input
-              style={{ "margin-top": "0" }}
-              type="text"
-              placeholder="City"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>Postal code</label>
-            <input
-              style={{ "margin-top": "0" }}
-              type="text"
-              placeholder="postal code"
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-            />
-          </div>
-        </div>
-        {loggedInUserData.admin && (
-          <div>
-            <label
-              className="p-2 inline-flex items-center gap-2 mb-2"
-              htmlFor="adminCb"
-            >
+            <label className="p-2 inline-flex items-center gap-2 mb-2" htmlFor="adminCb">
               <input
                 id="adminCb"
                 type="checkbox"
-                className=""
-                value={"1"}
+                value="1"
                 checked={admin}
-                onClick={(e) => e.target.checked}
+                onChange={ev => setAdmin(ev.target.checked)}
               />
               <span>Admin</span>
             </label>
           </div>
         )}
-
         <button type="submit">Save</button>
       </form>
     </div>
   );
-};
-
-export default UserForm;
+}

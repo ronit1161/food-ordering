@@ -13,7 +13,6 @@ export default function MenuItem({
   extraIngredientPrices = [],
 }) {
   const { addToCart } = useContext(CartContext);
-
   const [showPopup, setShowPopup] = useState(false);
   const [selectedSize, setSelectedSize] = useState(sizes?.[0] || null);
   const [selectedExtras, setSelectedExtras] = useState([]);
@@ -24,6 +23,23 @@ export default function MenuItem({
       setShowPopup(true);
       return;
     }
+
+    if (!basePrice) {
+      toast.error("Base price is missing for this item.");
+      return;
+    }
+
+    let selectedPrice = basePrice;
+    if (selectedSize) {
+      selectedPrice += selectedSize.price;
+    }
+    if (selectedExtras?.length > 0) {
+      selectedPrice += selectedExtras.reduce(
+        (total, extra) => total + extra.price,
+        0
+      );
+    }
+
     addToCart(
       {
         image,
@@ -46,21 +62,12 @@ export default function MenuItem({
     if (checked) {
       setSelectedExtras((prev) => [...prev, extraThing]);
     } else {
-      setSelectedExtras((prev) => {
-        return prev.filter((e) => e.name !== extraThing.name);
-      });
+      setSelectedExtras((prev) =>
+        prev.filter((e) => e.name !== extraThing.name)
+      );
     }
   }
 
-  let selectedPrice = basePrice;
-  if (selectedSize) {
-    selectedPrice += selectedSize.price;
-  }
-  if (selectedExtras?.length > 0) {
-    for (const extra of selectedExtras) {
-      selectedPrice += extra.price;
-    }
-  }
 
   return (
     <>
@@ -91,10 +98,10 @@ export default function MenuItem({
               {sizes?.length > 0 && (
                 <div className="p-2">
                   <h3 className="text-center text-gray-700">Pick your size</h3>
-                  {sizes.map((size, index) => (
+                  {sizes.map((size) => (
                     <label
                       className="flex items-center gap-2 p-4 border rounded-md mb-1"
-                      key={index}
+                      key={size._id}
                     >
                       <input
                         type="radio"
@@ -109,7 +116,7 @@ export default function MenuItem({
               )}
               {extraIngredientPrices?.length > 0 && (
                 <div className="p-2">
-                  <h3 className="text-center text-gray-700">Any Extras ?</h3>
+                  <h3 className="text-center text-gray-700">Any Extras?</h3>
                   {extraIngredientPrices.map((extraThing, index) => (
                     <label
                       className="flex items-center gap-2 p-4 border rounded-md mb-1"
@@ -130,7 +137,7 @@ export default function MenuItem({
                 type="button"
                 className="primary sticky bottom-2"
               >
-                Add to Cart {selectedPrice}
+                Add to Cart {/* {selectedPrice} */}
               </button>
               <button className="mt-2" onClick={() => setShowPopup(false)}>
                 Cancel

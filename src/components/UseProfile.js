@@ -6,12 +6,23 @@ export function UseProfile() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/profile").then((response) => {
-      response.json().then((data) => {
+    const res = fetch("/api/profile")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
         setData(data);
         setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching profile:", error);
+        setLoading(false);
       });
-    });
+
+    
   }, []);
 
   return { loading, data };

@@ -148,8 +148,10 @@ const CategoriesPage = () => {
         <h2 className="mt-8 text-sm text-gray-500">Existing Categories</h2>
         {categories?.length > 0 &&
           categories.map((c, index) => (
-            <div className="bg-gray-200 rounded-xl mb-1 p-2 px-4 flex gap-1 items-center"
-                  key={c.index}>
+            <div
+              className="bg-gray-200 rounded-xl mb-1 p-2 px-4 flex gap-1 items-center"
+              key={c._id}
+            >
               <div className=" grow">{c.name}</div>
               <div className="flex gap-1">
                 <button

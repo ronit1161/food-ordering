@@ -8,6 +8,8 @@ const MenuItemTile = ({ onAddToCart, ...item }) => {
     <div className="bg-gray-200 p-4 rounded-lg text-center hover:bg-white hover:shadow-md transition-all">
       <div className="text-center">
         <Image
+          width={150}
+          height={0}
           className="max-h-auto max-h-24 block mx-auto"
           src={image}
           alt="Food Images"

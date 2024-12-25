@@ -30,7 +30,7 @@ const MenuPage = () => {
               {menuItems
                 .filter((item) => item.category === c._id)
                 .map((item) => (
-                  <MenuItem {...item} key={item.id} />
+                  <MenuItem {...item} key={item._id} />
                 ))}
             </div>
           </div>
