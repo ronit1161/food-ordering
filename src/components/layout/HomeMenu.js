@@ -16,14 +16,14 @@ export const HomeMenu = () => {
 
 
   return (
-    <section className="relative pt-10">
+    <section className="relative pt-10 sm:mx-8">
       <div className="text-center mb-8">
         <SectionHeaders
           subHeader={"Check out"}
           mainHeader={"Our best sellers"}
         />
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-3 gap-4">
         {bestSellers?.length > 0 &&
           bestSellers.map((item) => <MenuItem {...item} key={item._id} />)}
       </div>

@@ -4,8 +4,8 @@ import Right from "../icons/Right";
 
 export default function Hero() {
   return (
-    <section className="hero pt-12 mt-8">
-      <div className="py-12">
+    <section className="hero md:mt-4">
+      <div className="py-8 md:py-12">
         <h1 className="text-4xl font-bold ">
           Everything <br /> is better
           <br /> with a <span className="text-primary">Pizza</span>
@@ -26,11 +26,11 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="relative object-cover overflow-hidden">
+      <div className="relative hidden md:block object-cover overflow-hidden">
         <Image
           src={"/pancake.jpg"}
-          layout="fill"
-          objectFit="contain"
+          layout={"fill"}
+          objectFit={"contain"}
           alt="Pizza Image"
         />
       </div>

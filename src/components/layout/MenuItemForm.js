@@ -71,7 +71,7 @@ export default function MenuItemForm({ onSubmit, menuItem }) {
   return (
     <form onSubmit={handleSubmit} className="mt-8 max-w-2xl mx-auto">
       <div
-        className="grid items-start gap-4"
+        className="md:grid items-start gap-4"
         style={{ gridTemplateColumns: "0.3fr 0.7fr" }}
       >
         <div>

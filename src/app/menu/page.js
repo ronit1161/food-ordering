@@ -26,7 +26,7 @@ const MenuPage = () => {
             <div className="text-center">
               <SectionHeaders subHeader={c.name} />
             </div>
-            <div className="grid grid-cols-3 gap-4 mt-6 mb-12">
+            <div className="grid sm:grid-cols-3 gap-4 mt-6 mb-12">
               {menuItems
                 .filter((item) => item.category === c._id)
                 .map((item) => (
