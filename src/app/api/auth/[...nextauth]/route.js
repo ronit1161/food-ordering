@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import NextAuth from "next-auth";
+import NextAuth, {getServerSession} from "next-auth";
 import { User } from "@/app/models/user";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@auth/mongodb-adapter"; // Uncomment if you want to use MongoDB adapter
 import clientPromise from "../../../../libs/mongoConnect.js"
+import { UserInfo } from "@/app/models/userInfo.js";
 
 export const authOptions = {
   
@@ -87,6 +88,18 @@ export const authOptions = {
     secret: process.env.NEXT_JWT_SECRET, // Ensure a JWT secret is set
   },
 };
+export async function isAdmin() {
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email;
+  if (!userEmail) {
+    return false;
+  }
+  const userInfo = await UserInfo.findOne({email:userEmail});
+  if (!userInfo) {
+    return false;
+  }
+  return userInfo.admin;
+}
 
 const handler = NextAuth(authOptions);
 

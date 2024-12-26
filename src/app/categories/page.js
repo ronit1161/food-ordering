@@ -97,7 +97,7 @@ const CategoriesPage = () => {
   }
 
   if (profileLoading) {
-    return "Loading user info...";
+    return "Loading categories...";
   }
 
   if (!profileData.admin) {

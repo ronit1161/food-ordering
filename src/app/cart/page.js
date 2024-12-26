@@ -15,7 +15,7 @@ const CartPage = () => {
   let subtotal = 0;
   for (const p of cartProducts) {
     subtotal += cartProductPrice(p);
-  } 
+  }
 
   function handleAddressChange(propName, value) {
     setAddress((prevAddress) => ({ ...prevAddress, [propName]: value }));
