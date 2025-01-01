@@ -87,6 +87,7 @@ export const authOptions = {
   jwt: {
     secret: process.env.NEXT_JWT_SECRET, // Ensure a JWT secret is set
   },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 export async function isAdmin() {
   const session = await getServerSession(authOptions);
