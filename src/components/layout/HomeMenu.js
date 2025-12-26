@@ -8,9 +8,13 @@ export const HomeMenu = () => {
 
   useEffect(() => {
     fetch("/api/menu-items").then((res) => {
-      res.json().then((menuItems) => {
-        setBestSellers(menuItems.slice(-3));
-      });
+      if (res.ok) {
+        res.json().then((menuItems) => {
+          if (Array.isArray(menuItems)) {
+            setBestSellers(menuItems.slice(-3));
+          }
+        });
+      }
     });
   }, []);
 

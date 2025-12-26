@@ -48,8 +48,15 @@ export async function PUT(req) {
 }
 
 export async function GET() {
-  mongoose.connect(process.env.NEXT_MONGO_URL);
-  return Response.json(await MenuItem.find());
+  try {
+    await mongoose.connect(process.env.NEXT_MONGO_URL);
+    return Response.json(await MenuItem.find());
+  } catch (error) {
+    console.error("Error fetching menu items:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+    });
+  }
 }
 
 export async function DELETE(req) {

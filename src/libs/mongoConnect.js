@@ -1,9 +1,6 @@
 import { MongoClient } from "mongodb";
 
-const client = new MongoClient(process.env.NEXT_MONGO_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const client = new MongoClient(process.env.NEXT_MONGO_URL);
 
 let clientPromise;
 
