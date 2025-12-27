@@ -4,10 +4,11 @@ const UserInfoSchema = new Schema(
   {
     email: { type: String, required: true },
     phone: { type: String },
-    address: { type: String },
+    streetAddress: { type: String }, // Added streetAddress
     city: { type: String },
     postalCode: { type: String },
-    isAdmin: { // Changed from "admin" to "isAdmin"
+    country: { type: String }, // Added country
+    isAdmin: { 
       type: Boolean,
       default: false,
     },

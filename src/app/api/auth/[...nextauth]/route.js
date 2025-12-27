@@ -1,17 +1,16 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import NextAuth, {getServerSession} from "next-auth";
+import NextAuth, { getServerSession } from "next-auth";
 import { User } from "@/app/models/user";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { MongoDBAdapter } from "@auth/mongodb-adapter"; // Uncomment if you want to use MongoDB adapter
-import clientPromise from "../../../../libs/mongoConnect.js"
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import clientPromise from "../../../../libs/mongoConnect.js";
 import { UserInfo } from "@/app/models/userInfo.js";
 
 export const authOptions = {
-  
-  adapter: MongoDBAdapter(clientPromise), // Uncomment if using the MongoDB adapter
-  secret: process.env.NEXT_SECRET,
+  adapter: MongoDBAdapter(clientPromise),
+  secret: process.env.NEXTAUTH_SECRET,
 
   providers: [
     GoogleProvider({
@@ -23,85 +22,89 @@ export const authOptions = {
       id: "credentials",
 
       credentials: {
-        username: {
-          label: "Email",
-          type: "email",
-          placeholder: "test@example.com",
-        },
+        email: { label: "Email", type: "email", placeholder: "test@example.com" },
         password: { label: "Password", type: "password" },
       },
 
       async authorize(credentials, req) {
-        const email = credentials?.email;
-        const password = credentials?.password;
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required.");
+        }
 
-        // Connect to MongoDB
-        await mongoose.connect(process.env.NEXT_MONGO_URL);
+        const email = credentials.email;
+        const password = credentials.password;
 
-        // Find user by email
-        const user = await User.findOne({ email });
+        if (mongoose.connection.readyState === 0) {
+          await mongoose.connect(process.env.NEXT_MONGO_URL);
+        }
 
+        const user = await User.findOne({ email }).lean();
+        
         if (!user) {
           throw new Error("No user found with the email.");
         }
 
-        // Compare password
-        const passwordOk = bcrypt.compareSync(password, user.password);
-
+        const passwordOk = await bcrypt.compare(password, user.password);
+        
         if (passwordOk) {
-          return user; // Return full user document, which will be passed to JWT callback
+          const { password, ...userWithoutPassword } = user;
+          return userWithoutPassword;
         }
 
-        return null;
+        throw new Error("Invalid credentials.");
       },
     }),
   ],
 
-  // Callbacks to handle JWT and session
   callbacks: {
-    // Save user information to token
     async jwt({ token, user }) {
       if (user) {
-        token.id = user._id;  // MongoDB user ID
+        token.id = user._id;
         token.name = user.name;
         token.email = user.email;
-        token.admin = user.admin;  // Ensure admin is added here
+        token.admin = user.admin;
       }
       return token;
     },
-    
+
     async session({ session, token }) {
       session.user.id = token.id;
       session.user.name = token.name;
       session.user.email = token.email;
-      session.user.admin = token.admin;  // Ensure admin is transferred here
+      session.user.admin = token.admin;
       return session;
     },
-
   },
 
   session: {
-    strategy: "jwt", // Use JWT strategy for session handling
+    strategy: "jwt",
   },
 
   jwt: {
-    secret: process.env.NEXT_JWT_SECRET, // Ensure a JWT secret is set
+    secret: process.env.NEXTAUTH_SECRET,
   },
-  secret: process.env.NEXTAUTH_SECRET,
+
+  // Custom page redirects
+  pages: {
+    signIn: '/auth/signin',  // Redirect to this page for sign-in
+    signOut: '/menu', // Redirect here for sign-out
+    error: '/error',    // Error page on sign-in failures
+  },
+
 };
+
 export async function isAdmin() {
   const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
   if (!userEmail) {
     return false;
   }
-  const userInfo = await UserInfo.findOne({email:userEmail});
+  const userInfo = await UserInfo.findOne({ email: userEmail });
   if (!userInfo) {
     return false;
   }
-  return userInfo.admin;
+  return userInfo.isAdmin;
 }
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };

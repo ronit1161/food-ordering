@@ -4,13 +4,29 @@ import AddressInputs from "@/components/layout/AddressInputs";
 import SectionHeaders from "@/components/layout/SectionHeaders";
 import CartProduct from "@/components/menu/CartProduct";
 import Script from "next/script";
-import { useContext, useState } from "react";
+import { UseProfile } from "@/components/UseProfile";
+import { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const CartPage = () => {
   const { cartProducts, removeCartProduct } = useContext(CartContext); // Use cartProducts
 
   const [address, setAddress] = useState({});
+  const { data: profileData } = UseProfile();
+
+  useEffect(() => {
+    if (profileData) {
+      const { phone, streetAddress, city, postalCode, country } = profileData;
+      const addressFromProfile = {
+        phone,
+        streetAddress,
+        city,
+        postalCode,
+        country,
+      };
+      setAddress(addressFromProfile);
+    }
+  }, [profileData]);
 
   let subtotal = 0;
   for (const p of cartProducts) {

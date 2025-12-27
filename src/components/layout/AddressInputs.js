@@ -44,6 +44,14 @@ export default function AddressInputs({
           />
         </div>
       </div>
+      <label>Country</label>
+      <input
+        disabled={disabled}
+        type="text"
+        placeholder="Country"
+        value={addressProps.country || ""}
+        onChange={(ev) => setAddressProp("country", ev.target.value)}
+      />
     </>
   );
 }

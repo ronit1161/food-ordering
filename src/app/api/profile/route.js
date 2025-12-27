@@ -7,12 +7,12 @@ import { UserInfo } from "@/app/models/userInfo";
 
 export async function PUT(request) {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(process.env.NEXT_MONGO_URL);
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.NEXT_MONGO_URL);
+    }
 
-    // Parse the request body
     const data = await request.json();
-    const { _id, name, image, ...otherUserInfo } = data;
+    const { _id, name, image, admin, ...otherUserInfo } = data;
 
     let filter = {};
 
@@ -29,24 +29,24 @@ export async function PUT(request) {
       filter = { email };
     }
 
-    // Update the User's name and image
-    await User.updateOne(filter, { name, image });
+    // Update the User's name, image, and admin status
+    await User.updateOne(filter, { name, image, admin });
 
-    // Update the UserInfo collection, create new entry if it doesn't exist
-    await UserInfo.findOneAndUpdate(filter, otherUserInfo, {
+    // Update the UserInfo collection, map 'admin' to 'isAdmin'
+    await UserInfo.findOneAndUpdate(filter, { ...otherUserInfo, isAdmin: admin }, {
       upsert: true,
     });
 
-    // Logging for debugging purposes
-    if (name) {
-      console.log("Updated data for username:", name);
-    }
-
-    // Return a successful response
-    return new Response("Data updated successfully", { status: 200 });
+    return new Response(JSON.stringify(true), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
     console.error("Error in PUT request:", error);
-    return new Response("Update failed", { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
@@ -83,13 +83,14 @@ export async function GET(request) {
       userInfo = await UserInfo.findOne({ email }).lean();
     }
 
-    // If the user or userInfo is not found, return an empty response
-    if (!user || !userInfo) {
+    // If the user is not found, return a 404 response
+    if (!user) {
       return new Response(JSON.stringify({}), { status: 404 });
     }
 
     // Return merged user and userInfo data
-    return new Response(JSON.stringify({ ...user, ...userInfo }), {
+    // Map 'isAdmin' from UserInfo back to 'admin' for frontend consistency if needed
+    return new Response(JSON.stringify({ ...user, ...userInfo, admin: user.admin || userInfo?.isAdmin }), {
       status: 200,
     });
   } catch (error) {

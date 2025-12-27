@@ -2,10 +2,25 @@ import mongoose from "mongoose";
 import { User } from "../../models/user";
 
 export async function POST(req) {
-  console.log(process.env.NEXT_MONGO_URL)
-    const body = await req.json();
-    mongoose.connect(process.env.NEXT_MONGO_URL);
-    const createdUser = await User.create(body)
-    return Response.json(createdUser);
+  const body = await req.json();
+  const { password } = body;
 
+  if (!password || password.length < 5) {
+    return new Response(JSON.stringify({ error: "Password must be at least 5 characters" }), { status: 400 });
+  }
+
+  // Check if Mongoose is already connected (readyState 0 means not connected)
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.NEXT_MONGO_URL);
+  }
+
+  try {
+    // Create a new user in the database
+    // This will trigger the pre-save hook in the User model to hash the password
+    const createdUser = await User.create(body);
+    return new Response(JSON.stringify(createdUser), { status: 201 });
+  } catch (error) {
+    // Handle any errors during user creation (e.g., unique email violation)
+    return new Response(JSON.stringify({ error: error.message }), { status: 400 });
+  }
 }
