@@ -1,46 +1,39 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { nanoid } from "nanoid";
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dbsdxqnvz',
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req) {
+  const data = await req.formData();
+  const file = data.get('file');
+
+  if (!file) {
+    return Response.json({ message: 'No file found' }, { status: 400 });
+  }
+
   try {
-    const data = await req.formData();
-    if (data.get('file')) {
-      const file = data.get('file');
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-      const s3client = new S3Client({
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: process.env.NEXT_AWS_ACCESS_KEY,
-          secretAccessKey: process.env.NEXT_AWS_SECRET_KEY,
-        },
-      });
+    const uploadResponse = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { resource_type: 'auto' }, // Auto-detect image/video
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      ).end(buffer);
+    });
 
-      const ext = file.name.split('.').slice(-1)[0];
-      const newFileName = nanoid() + '.' + ext;
-
-      const chunks = [];
-      for await (const chunk of file.stream()) {
-        chunks.push(chunk);
-      }
-
-      const buffer = Buffer.concat(chunks);
-      const bucket = 'ronit-food-ordering';
-
-      await s3client.send(new PutObjectCommand({
-        Bucket: bucket,
-        Key: newFileName,
-        ACL: 'public-read',
-        ContentType: file.type,
-        Body: buffer,
-      }));
-
-      const link = `https://${bucket}.s3.amazonaws.com/${newFileName}`;
-      return new Response(JSON.stringify({ link }), { status: 200 });
-    }
-
-    return new Response(JSON.stringify({ message: 'No file found' }), { status: 400 });
+    return Response.json({ link: uploadResponse.secure_url }, { status: 200 });
   } catch (error) {
-    console.error('Error uploading to S3:', error);
-    return new Response(JSON.stringify({ message: 'File upload failed', error }), { status: 500 });
+    console.error('Cloudinary upload error:', error);
+    return Response.json({ message: 'Upload failed', error: error.message }, { status: 500 });
   }
 }

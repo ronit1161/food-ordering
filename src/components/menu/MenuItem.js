@@ -1,8 +1,10 @@
+"use client";
 import { useContext, useState } from "react";
 import { CartContext } from "../AppContext";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import MenuItemTile from "@/components/menu/MenuItemTile";
 import Image from "next/image";
+import { optimizeCloudinaryUrl } from "@/libs/utils";
 
 export default function MenuItem({
   image,
@@ -74,74 +76,92 @@ export default function MenuItem({
       {showPopup && (
         <div
           onClick={() => setShowPopup(false)}
-          className="fixed inset-0 bg-black/80 flex items-center justify-center"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="my-8 p-2 bg-white rounded-lg max-w-md"
+            className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
             <div
-              className="overflow-y-scroll p-2"
-              style={{ maxHeight: "calc(100vh - 100px)" }}
+              className="overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200"
             >
-              <Image
-                src={image}
-                alt={name}
-                width={300}
-                height={200}
-                className="mx-auto"
-              />
-              <h2 className="text-lg font-bold text-center mb-2">{name}</h2>
-              <p className="text-center text-gray-500 text-sm mb-2">
+              <div className="aspect-video relative mb-4 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
+                <Image
+                  src={optimizeCloudinaryUrl(image, { width: 400 })}
+                  alt={name}
+                  width={300}
+                  height={200}
+                  className="object-contain"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-center mb-2 font-heading">{name}</h2>
+              <p className="text-center text-gray-500 text-sm mb-6 leading-relaxed">
                 {description}
               </p>
               {sizes?.length > 0 && (
-                <div className="p-2">
-                  <h3 className="text-center text-gray-700">Pick your size</h3>
-                  {sizes.map((size) => (
-                    <label
-                      className="flex items-center gap-2 p-4 border rounded-md mb-1"
-                      key={size._id}
-                    >
-                      <input
-                        type="radio"
-                        name="size"
-                        onClick={() => setSelectedSize(size)}
-                        checked={selectedSize?.name === size.name}
-                      />
-                      {size.name} ${basePrice + size.price}
-                    </label>
-                  ))}
+                <div className="mb-4">
+                  <h3 className="text-center text-gray-700 font-semibold mb-2">Pick your size</h3>
+                  <div className="space-y-2">
+                    {sizes.map((size) => (
+                      <label
+                        className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${
+                          selectedSize?.name === size.name 
+                            ? "border-primary bg-orange-50 ring-1 ring-primary" 
+                            : "border-gray-200 hover:border-gray-300 bg-gray-50"
+                        }`}
+                        key={size._id}
+                      >
+                        <input
+                          type="radio"
+                          name="size"
+                          onClick={() => setSelectedSize(size)}
+                          checked={selectedSize?.name === size.name}
+                          className="w-4 h-4 text-primary focus:ring-primary border-gray-300"
+                        />
+                        <span className="font-medium">{size.name}</span>
+                        <span className="ml-auto text-gray-500 text-sm font-semibold">+${basePrice + size.price}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               )}
               {extraIngredientPrices?.length > 0 && (
-                <div className="p-2">
-                  <h3 className="text-center text-gray-700">Any Extras?</h3>
-                  {extraIngredientPrices.map((extraThing, index) => (
-                    <label
-                      className="flex items-center gap-2 p-4 border rounded-md mb-1"
-                      key={index}
-                    >
-                      <input
-                        type="checkbox"
-                        name={extraThing.name}
-                        onClick={(e) => handleExtraThingClick(e, extraThing)}
-                      />
-                      {extraThing.name} +${extraThing.price}
-                    </label>
-                  ))}
+                <div className="mb-6">
+                  <h3 className="text-center text-gray-700 font-semibold mb-2">Any Extras?</h3>
+                  <div className="space-y-2">
+                    {extraIngredientPrices.map((extraThing, index) => (
+                      <label
+                        className="flex items-center gap-3 p-4 border border-gray-200 bg-gray-50 rounded-xl cursor-pointer hover:bg-white hover:border-gray-300 transition-colors"
+                        key={index}
+                      >
+                        <input
+                          type="checkbox"
+                          name={extraThing.name}
+                          onClick={(e) => handleExtraThingClick(e, extraThing)}
+                          className="w-4 h-4 text-primary rounded focus:ring-primary border-gray-300"
+                        />
+                        <span className="font-medium">{extraThing.name}</span>
+                        <span className="ml-auto text-gray-500 text-sm font-semibold">+${extraThing.price}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               )}
-              <button
-                onClick={handleAddToCartButtonClick}
-                type="button"
-                className="primary sticky bottom-2"
-              >
-                Add to Cart {/* {selectedPrice} */}
-              </button>
-              <button className="mt-2" onClick={() => setShowPopup(false)}>
-                Cancel
-              </button>
+              <div className="sticky bottom-0 bg-white pt-4 mt-auto gap-3 flex flex-col">
+                <button
+                  onClick={handleAddToCartButtonClick}
+                  type="button"
+                  className="primary w-full py-4 text-lg shadow-xl shadow-primary/20"
+                >
+                  Add to Cart
+                </button>
+                <button 
+                  className="w-full py-2 text-gray-500 font-medium hover:text-gray-800 transition-colors" 
+                  onClick={() => setShowPopup(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

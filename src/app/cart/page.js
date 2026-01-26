@@ -6,7 +6,7 @@ import CartProduct from "@/components/menu/CartProduct";
 import Script from "next/script";
 import { UseProfile } from "@/components/UseProfile";
 import { useContext, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 const CartPage = () => {
   const { cartProducts, removeCartProduct } = useContext(CartContext); // Use cartProducts
@@ -102,15 +102,15 @@ const CartPage = () => {
         <SectionHeaders subHeader="Cart" />
       </div>
 
-      <div className="grid grid-cols-2 gap-12 mt-8">
-        <div>
+      <div className="grid md:grid-cols-2 gap-12 mt-12 items-start">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           {cartProducts?.length === 0 && (
-            <div>No products in your shopping cart</div>
+            <div className="text-center text-gray-500 py-12">No products in your shopping cart</div>
           )}
           {cartProducts?.length > 0 &&
             cartProducts.map((product, index) => (
               <div
-                className="gap-4 mb-2 border-b py-2 items-center"
+                className="gap-4 mb-4 border-b border-gray-100 pb-4 items-center last:border-0"
                 key={index}
               >
                 <CartProduct
@@ -120,30 +120,31 @@ const CartPage = () => {
                 />
               </div>
             ))}
-          <div className="py-2 pr-16 flex justify-end items-center">
-            <div className="text-gray-500">
+          <div className="py-4 flex justify-end items-center text-lg mt-4 border-t border-gray-100 pt-8">
+            <div className="text-gray-500 font-medium">
               Subtotal:
               <br />
               Delivery:
               <br />
-              Total:
+              <span className="text-gray-900 font-bold text-xl mt-2 block">Total:</span>
             </div>
-            <div className="font-semibold pl-2 text-right">
+            <div className="font-bold pl-8 text-right text-gray-900">
               ${subtotal}
               <br />
               $5
-              <br />${subtotal + 5}
+              <br />
+              <span className="text-primary text-xl mt-2 block">${subtotal + 5}</span>
             </div>
           </div>
         </div>
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <h2>Checkout</h2>
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 sticky top-24">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 font-heading">Checkout details</h2>
           <form onSubmit={proceedToCheckout}>
             <AddressInputs
               addressProps={address}
               setAddressProp={handleAddressChange}
             />
-            <button type="submit">Pay ${subtotal + 5}</button>
+            <button type="submit" className="w-full mt-6 py-4 text-lg shadow-xl shadow-primary/20">Pay ${subtotal + 5}</button>
           </form>
         </div>
       </div>

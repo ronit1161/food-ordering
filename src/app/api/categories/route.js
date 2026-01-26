@@ -1,13 +1,9 @@
 import { Category } from "@/app/models/Categories";
-import mongoose from "mongoose";
+import dbConnect from "@/libs/mongoose";
 import { NextResponse } from "next/server";
 
-// Helper function to connect to the database
-async function connectDB() {
-  if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.NEXT_MONGO_URL);
-  }
-}
+// Helper function to connect to the database - now using shared connection
+const connectDB = dbConnect;
 
 // POST: Create a new category
 export async function POST(req) {
@@ -65,13 +61,15 @@ export async function PUT(req) {
   }
 }
 
+export const revalidate = 60; // Revalidate every 60 seconds
+
 export async function GET() {
   try {
     // Ensure MongoDB is connected
     await connectDB();
 
     // Fetch all categories
-    const categories = await Category.find();
+    const categories = await Category.find().lean();
 
     // Return the categories
     return NextResponse.json(categories, { status: 200 });

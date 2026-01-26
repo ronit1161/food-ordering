@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import UserTabs from "@/components/layout/UserTabs";
 import UserForm from "@/components/layout/UserForm";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-hot-toast';
 
 const ProfilePage = () => { 
 
@@ -41,28 +40,30 @@ const ProfilePage = () => {
       imageUrl = data.image.link;
     }
   
-    try {
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, image: imageUrl }),
-      });
-  
-      if (response.ok) {
-        const updatedSession = await getSession();
-        toast.success("Profile updated successfully!", {
-          autoClose: 3000,
+    const savingPromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, image: imageUrl }),
         });
-      } else {
-        toast.error("Failed to update profile. Please try again.", {
-          autoClose: 3000,
-        });
+    
+        if (response.ok) {
+          const updatedSession = await getSession(); // Refresh session
+          resolve(); 
+        } else {
+          reject();
+        }
+      } catch (error) {
+        reject();
       }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.", {
-        autoClose: 3000,
-      });
-    }
+    });
+
+    await toast.promise(savingPromise, {
+      loading: 'Saving...',
+      success: 'Profile updated!',
+      error: 'Error saving profile',
+    });
   };
 
   if (status === "loading") {
@@ -76,8 +77,6 @@ const ProfilePage = () => {
       <div className="max-w-2xl mx-auto mt-8">
         <UserForm user={user} onSave={handleProfileInfoUpdate} />
       </div>
-
-      <ToastContainer /> {/* Add this to display Toasts */}
     </section>
   );
 };

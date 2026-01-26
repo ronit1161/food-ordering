@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import dbConnect from "@/libs/mongoose";
 import { MenuItem } from "../../models/MenuItem";
 
 export async function POST(req) {
   try {
     // Ensure mongoose is connected
-    await mongoose.connect(process.env.NEXT_MONGO_URL);
+    await dbConnect();
 
     const data = await req.json();
 
@@ -31,7 +31,7 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-  mongoose.connect(process.env.NEXT_MONGO_URL);
+  await dbConnect();
   const { _id, description, basePrice, ...data } = await req.json();
 
   // Ensure that the required fields are provided during the update
@@ -43,14 +43,16 @@ export async function PUT(req) {
   }
 
   // Update the MenuItem by ID
-  await MenuItem.findByIdAndUpdate(_id, data);
+  await MenuItem.findByIdAndUpdate(_id, { description, basePrice, ...data });
   return Response.json(true);
 }
 
+export const revalidate = 60; // Revalidate every 60 seconds
+
 export async function GET() {
   try {
-    await mongoose.connect(process.env.NEXT_MONGO_URL);
-    return Response.json(await MenuItem.find());
+    await dbConnect();
+    return Response.json(await MenuItem.find().lean());
   } catch (error) {
     console.error("Error fetching menu items:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
@@ -62,7 +64,7 @@ export async function GET() {
 export async function DELETE(req) {
   try {
     // Ensure mongoose is connected
-    await mongoose.connect(process.env.NEXT_MONGO_URL);
+    await dbConnect();
 
     // Extract _id from query parameters
     const url = new URL(req.url);

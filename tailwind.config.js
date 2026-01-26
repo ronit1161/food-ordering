@@ -8,7 +8,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#f13a01",
+        primary: "#F97316", // Sunset Orange
+        secondary: "#10B981", // Emerald Green for freshness/success
+        background: "#FAFAF9", // Warm Stone-50
+        surface: "#FFFFFF",
+        typography: {
+            main: "#1F2937", // Gray-800
+            muted: "#6B7280", // Gray-500
+        }
+      },
+      fontFamily: {
+        heading: ["var(--font-outfit)", "sans-serif"],
+        sans: ["var(--font-jakarta)", "sans-serif"],
       },
     },
   },

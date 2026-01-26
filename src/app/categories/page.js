@@ -3,8 +3,7 @@ import UserTabs from "@/components/layout/UserTabs";
 import React, { useEffect, useState } from "react";
 import { UseProfile } from "@/components/UseProfile";
 import DeleteButton from "@/components/DeleteButton";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-hot-toast";
 
 const CategoriesPage = () => {
   const [CategoryName, setCategoryName] = useState("");
@@ -61,7 +60,7 @@ const CategoriesPage = () => {
     });
 
     await toast.promise(creationPromise, {
-      pending: editedCategory
+      loading: editedCategory
         ? "Updating Category"
         : "Creating your new category...",
       success: editedCategory
@@ -171,8 +170,6 @@ const CategoriesPage = () => {
             </div>
           ))}
       </div>
-
-      <ToastContainer />
     </section>
   );
 };

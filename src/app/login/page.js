@@ -22,7 +22,7 @@ export default function LoginPage() {
         Login
       </h1>
 
-      <form className="max-w-xs mx-auto" onSubmit={handleFormSubmit}>
+      <form className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-gray-100" onSubmit={handleFormSubmit}>
         <input
           type="email"
           name="email"
@@ -41,21 +41,22 @@ export default function LoginPage() {
           onChange={(ev) => setPassword(ev.target.value)}
         />
 
-        <button disabled={loginInProgress} type="submit">
+        <button disabled={loginInProgress} type="submit" className="w-full py-3 text-lg shadow-lg shadow-primary/20">
           Login
         </button>
 
-        <div className="my-4 text-center text-gray-500">
-          or login with provider
+        <div className="my-6 text-center text-gray-500 relative">
+          <span className="bg-white px-4 relative z-10 text-sm">or login with provider</span>
+          <div className="absolute inset-x-0 top-1/2 h-px bg-gray-200 -z-0"></div>
         </div>
 
         <button
           type="button"
           onClick={() => signIn("google", { callbackUrl: "/" })}
-          className="flex gap-4 justify-center"
+          className="flex gap-4 justify-center items-center w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:shadow-sm font-medium transition-all rounded-xl py-3"
         >
           <Image src={"/google.png"} alt={""} width={24} height={24} />
-          Login with google
+          Login with Google
         </button>
       </form>
     </section>

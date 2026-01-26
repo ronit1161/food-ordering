@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import dbConnect from "@/libs/mongoose";
 import bcrypt from "bcrypt";
 import NextAuth, { getServerSession } from "next-auth";
 import { User } from "@/app/models/user";
@@ -34,9 +34,7 @@ export const authOptions = {
         const email = credentials.email;
         const password = credentials.password;
 
-        if (mongoose.connection.readyState === 0) {
-          await mongoose.connect(process.env.NEXT_MONGO_URL);
-        }
+        await dbConnect();
 
         const user = await User.findOne({ email }).lean();
         
@@ -99,7 +97,13 @@ export async function isAdmin() {
   if (!userEmail) {
     return false;
   }
-  const userInfo = await UserInfo.findOne({ email: userEmail });
+  
+  // Optimization: Check session first
+  if (session.user.admin !== undefined) {
+    return session.user.admin;
+  }
+
+  const userInfo = await UserInfo.findOne({ email: userEmail }).lean();
   if (!userInfo) {
     return false;
   }

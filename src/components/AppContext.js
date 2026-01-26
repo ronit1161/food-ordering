@@ -1,7 +1,8 @@
 "use client";
 import { SessionProvider } from "next-auth/react";
-import { createContext, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { createContext, useEffect, useState, useMemo } from "react";
+import { toast } from "react-hot-toast";
+import { debounce } from "@/libs/utils";
 
 export const CartContext = createContext({});
 
@@ -29,6 +30,20 @@ const AppContext = ({ children }) => {
     }
   }, [ls]);
 
+  const debouncedSave = useMemo(
+    () =>
+      debounce((products) => {
+        if (ls) {
+          ls.setItem("cart", JSON.stringify(products));
+        }
+      }, 500),
+    [ls]
+  );
+
+  function saveCartProductsToLocalStorage(products) {
+    debouncedSave(products);
+  }
+
   function removeCartProduct(indexToRemove) {
     setCartProducts(prevCartProducts => {
       const newCartProducts = prevCartProducts
@@ -42,12 +57,6 @@ const AppContext = ({ children }) => {
   function clearCart() {
     setCartProducts([]);
     saveCartProductsToLocalStorage([]);
-  }
-
-  function saveCartProductsToLocalStorage(cartProducts) {
-    if (ls) {
-      ls.setItem("cart", JSON.stringify(cartProducts));
-    }
   }
 
   function addToCart(product, size = null, extras = []) {

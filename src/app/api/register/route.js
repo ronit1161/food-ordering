@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import dbConnect from "@/libs/mongoose";
 import { User } from "../../models/user";
 
 export async function POST(req) {
@@ -9,10 +9,8 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: "Password must be at least 5 characters" }), { status: 400 });
   }
 
-  // Check if Mongoose is already connected (readyState 0 means not connected)
-  if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.NEXT_MONGO_URL);
-  }
+  // Ensure database connection
+  await dbConnect();
 
   try {
     // Create a new user in the database

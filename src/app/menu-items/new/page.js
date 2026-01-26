@@ -3,7 +3,7 @@ import UserTabs from "@/components/layout/UserTabs";
 import { UseProfile } from "@/components/UseProfile";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import MenuItemForm from "@/components/layout/MenuItemForm";
 

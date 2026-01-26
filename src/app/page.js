@@ -1,12 +1,20 @@
 import Hero from "@/components/layout/Hero";
 import { HomeMenu } from "@/components/layout/HomeMenu";
 import SectionHeaders from "@/components/layout/SectionHeaders";
+import dbConnect from "@/libs/mongoose";
+import { MenuItem } from "@/app/models/MenuItem";
 
-export default function Home() {
+export default async function Home() {
+  await dbConnect();
+  const bestSellers = await MenuItem.find({}, null, { limit: 3, sort: { createdAt: -1 } }).lean();
+  
+  // Serialize _id to string to avoid passing objects to client component (if Next.js warns)
+  const serializedBestSellers = JSON.parse(JSON.stringify(bestSellers));
+
   return (
     <>
       <Hero />
-      <HomeMenu />
+      <HomeMenu bestSellers={serializedBestSellers} />
 
       <section className="text-center my-16" id="about">
         <SectionHeaders mainHeader={"Our story"} subHeader={"About us"} />

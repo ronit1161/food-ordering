@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import dbConnect from "@/libs/mongoose";
 import { User } from "@/app/models/user";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route"; // Import authOptions
@@ -7,9 +7,7 @@ import { UserInfo } from "@/app/models/userInfo";
 
 export async function PUT(request) {
   try {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.NEXT_MONGO_URL);
-    }
+    await dbConnect();
 
     const data = await request.json();
     const { _id, name, image, admin, ...otherUserInfo } = data;
@@ -33,7 +31,7 @@ export async function PUT(request) {
     await User.updateOne(filter, { name, image, admin });
 
     // Update the UserInfo collection, map 'admin' to 'isAdmin'
-    await UserInfo.findOneAndUpdate(filter, { ...otherUserInfo, isAdmin: admin }, {
+    await UserInfo.findOneAndUpdate(filter, { ...otherUserInfo, image, isAdmin: admin }, {
       upsert: true,
     });
 
@@ -54,7 +52,8 @@ export async function PUT(request) {
 export async function GET(request) {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.NEXT_MONGO_URL);
+    // Connect to MongoDB
+    await dbConnect();
 
     // Create a new URL object from the request URL
     const url = new URL(request.url);

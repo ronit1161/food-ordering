@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import dbConnect from "@/libs/mongoose";
 import { getServerSession } from "next-auth";
 import Razorpay from "razorpay";
 import { authOptions } from "../auth/[...nextauth]/route";
@@ -7,9 +7,8 @@ import { Order } from "@/app/models/order";
 export async function POST(req) {
   try {
     // Ensure MongoDB is connected
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.NEXT_MONGO_URL);
-    }
+    // Ensure MongoDB is connected
+    await dbConnect();
 
     // Parse the request body
     const { address, cartProducts } = await req.json();

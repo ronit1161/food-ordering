@@ -3,6 +3,7 @@ import { Schema, model, models } from "mongoose";
 const UserInfoSchema = new Schema(
   {
     email: { type: String, required: true },
+    image: { type: String },
     phone: { type: String },
     streetAddress: { type: String }, // Added streetAddress
     city: { type: String },

@@ -2,7 +2,7 @@
 import EditableImage from "@/components/layout/EditableImage";
 import MenuItemPriceProps from "@/components/layout/MenuItemPriceProps";
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify"; // Toastify for feedback
+import { toast } from "react-hot-toast"; // Toastify for feedback
 
 export default function MenuItemForm({ onSubmit, menuItem }) {
   const [image, setImage] = useState(menuItem?.image || "");

@@ -5,7 +5,7 @@ import { UseProfile } from "@/components/UseProfile";
 import DeleteButton from "@/components/DeleteButton";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { redirect, useParams, useRouter } from "next/navigation";
 
 export default function EditMenuItemPage() {
