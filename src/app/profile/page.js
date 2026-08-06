@@ -7,7 +7,7 @@ import UserForm from "@/components/layout/UserForm";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const ProfilePage = () => { 
+const ProfilePage = () => {
 
   const session = useSession();
 
@@ -18,7 +18,7 @@ const ProfilePage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated") { 
+    if (status === "authenticated") {
       fetch("/api/profile").then((response) => {
         response.json().then((data) => {
           setUser(data);
@@ -40,16 +40,22 @@ const ProfilePage = () => {
     if (data.image && typeof data.image === "object" && data.image.link) {
       imageUrl = data.image.link;
     }
-  
+
     try {
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, image: imageUrl }),
       });
-  
+
       if (response.ok) {
-        const updatedSession = await getSession();
+        await getSession();
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const updatedData = await res.json();
+          setUser(updatedData);
+          setIsAdmin(updatedData.admin);
+        }
         toast.success("Profile updated successfully!", {
           autoClose: 3000,
         });

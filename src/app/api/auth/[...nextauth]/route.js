@@ -9,9 +9,8 @@ import clientPromise from "../../../../libs/mongoConnect.js"
 import { UserInfo } from "@/app/models/userInfo.js";
 
 export const authOptions = {
-  
-  adapter: MongoDBAdapter(clientPromise), // Uncomment if using the MongoDB adapter
-  secret: process.env.NEXT_SECRET,
+  adapter: MongoDBAdapter(clientPromise),
+  secret: process.env.NEXTAUTH_SECRET,
 
   providers: [
     GoogleProvider({
@@ -23,7 +22,7 @@ export const authOptions = {
       id: "credentials",
 
       credentials: {
-        username: {
+        email: {
           label: "Email",
           type: "email",
           placeholder: "test@example.com",
@@ -32,8 +31,12 @@ export const authOptions = {
       },
 
       async authorize(credentials, req) {
-        const email = credentials?.email;
+        const email = credentials?.email || credentials?.username;
         const password = credentials?.password;
+
+        if (!email || !password) {
+          throw new Error("Email and password are required.");
+        }
 
         // Connect to MongoDB
         await mongoose.connect(process.env.NEXT_MONGO_URL);
@@ -43,6 +46,10 @@ export const authOptions = {
 
         if (!user) {
           throw new Error("No user found with the email.");
+        }
+
+        if (!user.password) {
+          throw new Error("Please log in using your Google account.");
         }
 
         // Compare password
@@ -62,7 +69,7 @@ export const authOptions = {
     // Save user information to token
     async jwt({ token, user }) {
       if (user) {
-        token.id = user._id;  // MongoDB user ID
+        token.id = user._id || user.id;  // MongoDB user ID
         token.name = user.name;
         token.email = user.email;
         token.admin = user.admin;  // Ensure admin is added here
@@ -71,10 +78,12 @@ export const authOptions = {
     },
     
     async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.name = token.name;
-      session.user.email = token.email;
-      session.user.admin = token.admin;  // Ensure admin is transferred here
+      if (session?.user) {
+        session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.admin = token.admin;  // Ensure admin is transferred here
+      }
       return session;
     },
 
@@ -84,22 +93,31 @@ export const authOptions = {
     strategy: "jwt", // Use JWT strategy for session handling
   },
 
-  jwt: {
-    secret: process.env.NEXT_JWT_SECRET, // Ensure a JWT secret is set
+  pages: {
+    signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+
+  jwt: {
+    secret: process.env.NEXTAUTH_SECRET,
+  },
 };
+
 export async function isAdmin() {
   const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
   if (!userEmail) {
     return false;
   }
-  const userInfo = await UserInfo.findOne({email:userEmail});
-  if (!userInfo) {
-    return false;
+  await mongoose.connect(process.env.NEXT_MONGO_URL);
+  const user = await User.findOne({ email: userEmail });
+  if (user && user.admin) {
+    return true;
   }
-  return userInfo.admin;
+  const userInfo = await UserInfo.findOne({ email: userEmail });
+  if (userInfo && userInfo.admin) {
+    return true;
+  }
+  return false;
 }
 
 const handler = NextAuth(authOptions);

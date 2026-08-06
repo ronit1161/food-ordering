@@ -4,8 +4,9 @@ import EditableImage from "@/components/layout/EditableImage";
 import { UseProfile } from "@/components/UseProfile";
 import { useState, useEffect } from "react";
 
-export default function UserForm({ user, onSave }) {
+export default function UserForm({ user, onSave, OnSave }) {
   const { data: loggedInUserData } = UseProfile(); // Properly using the hook here
+  const handleSave = onSave || OnSave;
   const [userName, setUserName] = useState(user?.name || '');
   const [image, setImage] = useState(user?.image || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -15,19 +16,20 @@ export default function UserForm({ user, onSave }) {
   const [country, setCountry] = useState(user?.country || '');
   const [admin, setAdmin] = useState(user?.admin || false);
 
-  // If loggedInUserData is available, use it to set the form fields
+  const targetUserData = user || loggedInUserData;
+
   useEffect(() => {
-    if (loggedInUserData) {
-      setUserName(loggedInUserData.name || '');
-      setImage(loggedInUserData.image || '');
-      setPhone(loggedInUserData.phone || '');
-      setStreetAddress(loggedInUserData.streetAddress || '');
-      setPostalCode(loggedInUserData.postalCode || '');
-      setCity(loggedInUserData.city || '');
-      setCountry(loggedInUserData.country || '');
-      setAdmin(loggedInUserData.admin || false);
+    if (targetUserData) {
+      setUserName(targetUserData.name || '');
+      setImage(targetUserData.image || '');
+      setPhone(targetUserData.phone || '');
+      setStreetAddress(targetUserData.streetAddress || '');
+      setPostalCode(targetUserData.postalCode || '');
+      setCity(targetUserData.city || '');
+      setCountry(targetUserData.country || '');
+      setAdmin(targetUserData.admin || false);
     }
-  }, [loggedInUserData]); // Depend on loggedInUserData
+  }, [targetUserData?._id, targetUserData?.email, targetUserData]);
 
   function handleAddressChange(propName, value) {
     if (propName === 'phone') setPhone(value);
@@ -47,7 +49,7 @@ export default function UserForm({ user, onSave }) {
       <form
         className="grow"
         onSubmit={ev =>
-          onSave(ev, {
+          handleSave(ev, {
             name: userName, image, phone, admin,
             streetAddress, city, country, postalCode,
           })

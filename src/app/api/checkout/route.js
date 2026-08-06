@@ -26,6 +26,16 @@ export async function POST(req) {
     const session = await getServerSession(authOptions);
     const userEmail = session?.user?.email;
 
+    if (!userEmail) {
+      return new Response(
+        JSON.stringify({ message: "You must be logged in to checkout" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Save order in the database
     const orderDoc = await Order.create({
       userEmail,
@@ -65,8 +75,11 @@ export async function POST(req) {
       
       console.log("Razorpay Order Created:", razorpayOrder);
     
-      // Return the Razorpay order ID to the frontend
-      return new Response(JSON.stringify({ razorpayOrderId: razorpayOrder.id }), {
+      // Return the Razorpay order ID and DB order ID to the frontend
+      return new Response(JSON.stringify({ 
+        razorpayOrderId: razorpayOrder.id,
+        orderId: orderDoc._id,
+      }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });

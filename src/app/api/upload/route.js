@@ -1,5 +1,10 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import uniqid from "uniqid";
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req) {
   try {
@@ -7,40 +12,28 @@ export async function POST(req) {
     if (data.get('file')) {
       const file = data.get('file');
 
-      const s3client = new S3Client({
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: process.env.NEXT_AWS_ACCESS_KEY,
-          secretAccessKey: process.env.NEXT_AWS_SECRET_KEY,
-        },
-      });
-
-      const ext = file.name.split('.').slice(-1)[0];
-      const newFileName = uniqid() + '.' + ext;
-
       const chunks = [];
       for await (const chunk of file.stream()) {
         chunks.push(chunk);
       }
-
       const buffer = Buffer.concat(chunks);
-      const bucket = 'ronit-food-ordering';
+      
+      // Convert buffer to data URI format
+      const base64Content = buffer.toString('base64');
+      const dataUri = `data:${file.type};base64,${base64Content}`;
 
-      await s3client.send(new PutObjectCommand({
-        Bucket: bucket,
-        Key: newFileName,
-        ACL: 'public-read',
-        ContentType: file.type,
-        Body: buffer,
-      }));
+      // Upload to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload(dataUri, {
+        folder: 'food-ordering',
+      });
 
-      const link = `https://${bucket}.s3.amazonaws.com/${newFileName}`;
+      const link = uploadResult.secure_url;
       return new Response(JSON.stringify({ link }), { status: 200 });
     }
 
     return new Response(JSON.stringify({ message: 'No file found' }), { status: 400 });
   } catch (error) {
-    console.error('Error uploading to S3:', error);
+    console.error('Error uploading to Cloudinary:', error);
     return new Response(JSON.stringify({ message: 'File upload failed', error }), { status: 500 });
   }
 }

@@ -29,8 +29,8 @@ export default function Hero() {
       <div className="relative hidden md:block object-cover overflow-hidden">
         <Image
           src={"/pancake.jpg"}
-          layout={"fill"}
-          objectFit={"contain"}
+          fill
+          style={{ objectFit: "contain" }}
           alt="Pizza Image"
         />
       </div>

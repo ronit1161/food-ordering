@@ -40,15 +40,16 @@ function AuthLinks({ status, userName }) {
 
 export default function Header() {
   const session = useSession();
-  const status = session?.status;
-
   const userData = session.data?.user;
+  const isAuthenticated = session?.status === "authenticated" && !!userData?.email;
+  const status = isAuthenticated ? "authenticated" : session?.status === "loading" ? "loading" : "unauthenticated";
 
   let userName = userData?.name || userData?.email;
 
   const { cartProducts } = useContext(CartContext);
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const cartHref = isAuthenticated ? "/cart" : "/login";
 
   return (
     <>
@@ -58,7 +59,7 @@ export default function Header() {
             PIZZA HOUSE
           </Link>
           <div className="flex items-center gap-8">
-            <Link href={"/cart"} className="relative">
+            <Link href={cartHref} className="relative">
               <ShoppingCart />
               <span className="absolute -top-2 -right-4 bg-primary text-white text-xs py-1 px-1 rounded-full leading-3">
                 ({cartProducts.length})
@@ -101,7 +102,7 @@ export default function Header() {
 
           <nav className="flex items-center font-semibold gap-4">
             <AuthLinks status={status} userName={userName} />
-            <Link href={"/cart"} className="relative">
+            <Link href={cartHref} className="relative">
               <ShoppingCart />
               <span className="absolute -top-2 -right-4 bg-primary text-white text-xs py-1 px-1 rounded-full leading-3">
                 ({cartProducts.length})

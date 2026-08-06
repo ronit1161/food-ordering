@@ -1,4 +1,5 @@
 "use client";
+import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -8,28 +9,33 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [creatingUser, setCreatingUser] = useState(false);
   const [userCreated, setUserCreated] = useState(false);
-  const [error, setError] = useState(false); // To store any errors
+  const [errorMessage, setErrorMessage] = useState("");
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setCreatingUser(true);
-    setError(false);
-    setUserCreated(false)
-  
-    const response = await fetch('api/register', {
-      method: 'POST',
-      body: JSON.stringify({email, password}),
-      headers: {'Content-Type': 'application/json'},
-    });
+    setErrorMessage("");
+    setUserCreated(false);
 
-    if (response.ok) {
-      setUserCreated(true);
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUserCreated(true);
+      } else {
+        setErrorMessage(data?.error || "An error has occurred. Please try again later.");
+      }
+    } catch (err) {
+      setErrorMessage("An error has occurred. Please try again later.");
     }
-    else{
-      setError(true)
-    }
-    setCreatingUser(false)
-  }
+    setCreatingUser(false);
+  };
 
   return (
     <section className="mt-12">
@@ -38,17 +44,18 @@ const RegisterPage = () => {
       </h1>
 
       {userCreated && (
-        <div className="text-center mt-4 text-gray-500"> 
+        <div className="text-center mt-4 text-gray-500">
           User Created. <br />
-          Now you can{' '}
-          <Link className='underline' href={'/login'}>Login &raquo;</Link>
+          Now you can{" "}
+          <Link className="underline" href={"/login"}>
+            Login &raquo;
+          </Link>
         </div>
       )}
 
-      {error && (
-        <div className="text-center mt-4 text-gray-500">
-          An error has occured. <br />
-          Please try again later
+      {errorMessage && (
+        <div className="text-center mt-4 text-red-500 font-medium">
+          {errorMessage}
         </div>
       )}
 
@@ -57,34 +64,42 @@ const RegisterPage = () => {
           type="email"
           placeholder="email"
           value={email}
+          disabled={creatingUser}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           placeholder="Enter password"
           value={password}
+          disabled={creatingUser}
           onChange={(e) => setPassword(e.target.value)}
         />
         <button type="submit" disabled={creatingUser}>
           Register
         </button>
+      </form>
 
+      <div className="max-w-xs mx-auto mt-4">
         <div className="my-2 text-center text-gray-500">
           or login with provider
         </div>
 
-        <div className="max-w-xs mx-auto mt-4">
-          <button className="flex gap-4 justify-center">
-            <Image src={"/google.png"} alt={"google"} width={24} height={24} />
-            Sign in with Google
-          </button>
+        <button
+          type="button"
+          onClick={() => signIn("google", { callbackUrl: "/" })}
+          className="flex gap-4 justify-center"
+        >
+          <Image src={"/google.png"} alt={"google"} width={24} height={24} />
+          Sign in with Google
+        </button>
 
-          <div className="text-center text-gray-500 mt-4 border-t pt-8">
-            Existing account ? {'  '} 
-            <Link href={'/login'} className="underline">Login here &raquo;</Link>
-          </div>
+        <div className="text-center text-gray-500 mt-4 border-t pt-8">
+          Existing account ? {"  "}
+          <Link href={"/login"} className="underline">
+            Login here &raquo;
+          </Link>
         </div>
-      </form>
+      </div>
     </section>
   );
 };

@@ -1,4 +1,6 @@
 import { useContext, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { CartContext } from "../AppContext";
 import { toast } from "react-toastify";
 import MenuItemTile from "@/components/menu/MenuItemTile";
@@ -13,11 +15,20 @@ export default function MenuItem({
   extraIngredientPrices = [],
 }) {
   const { addToCart } = useContext(CartContext);
+  const session = useSession();
+  const router = useRouter();
   const [showPopup, setShowPopup] = useState(false);
   const [selectedSize, setSelectedSize] = useState(sizes?.[0] || null);
   const [selectedExtras, setSelectedExtras] = useState([]);
 
   function handleAddToCartButtonClick() {
+    const isAuthenticated = session?.status === "authenticated" && !!session?.data?.user?.email;
+    if (!isAuthenticated) {
+      toast.info("Please log in to add items to your cart.");
+      router.push("/login");
+      return;
+    }
+
     const hasOptions = sizes.length > 0 || extraIngredientPrices.length > 0;
     if (hasOptions && !showPopup) {
       setShowPopup(true);

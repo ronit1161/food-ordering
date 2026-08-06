@@ -1,18 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['lh3.googleusercontent.com'],
         remotePatterns: [
             {
-                protocol: 'http',
+                protocol: 'https',
                 hostname: '*.googleusercontent.com',
             },
             {
                 protocol: 'https',
-                hostname: 'ronit-food-ordering.s3.amazonaws.com',
+                hostname: 'res.cloudinary.com',
             },
-        ]
-    }
+        ],
+    },
 };
 
 export default nextConfig;

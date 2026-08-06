@@ -1,6 +1,7 @@
 import { Category } from "@/app/models/Categories";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
+import { isAdmin } from "@/app/api/auth/[...nextauth]/route";
 
 // Helper function to connect to the database
 async function connectDB() {
@@ -14,6 +15,10 @@ export async function POST(req) {
   try {
     // Ensure MongoDB is connected
     await connectDB();
+
+    if (!await isAdmin()) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // Parse the request body
     const { name } = await req.json();
@@ -41,6 +46,10 @@ export async function PUT(req) {
   try {
     // Ensure MongoDB is connected
     await connectDB();
+
+    if (!await isAdmin()) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // Parse the request body
     const { _id, name } = await req.json();
@@ -85,6 +94,10 @@ export async function DELETE(req) {
   try {
     // Ensure MongoDB is connected
     await connectDB();
+
+    if (!await isAdmin()) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // Extract _id from the URL
     const url = new URL(req.url);
