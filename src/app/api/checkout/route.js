@@ -36,66 +36,92 @@ export async function POST(req) {
       );
     }
 
+    const deliveryAddress = address?.streetAddress || address?.address || "";
+
     // Save order in the database
     const orderDoc = await Order.create({
       userEmail,
-      ...address,
+      phone: address?.phone || "",
+      address: deliveryAddress,
+      streetAddress: deliveryAddress,
+      city: address?.city || "",
+      postalCode: address?.postalCode || "",
+      country: address?.country || "",
       cartProducts,
       paid: false, // Mark the order as unpaid initially
     });
 
-    let totalPrice = 0;
+    let subtotal = 0;
 
-    // Calculate the total price
+    // Calculate total price considering basePrice, sizes, extras, and quantity
     cartProducts.forEach((product) => {
-      if (product?.basePrice) {
-        totalPrice += product.basePrice; // Add base price of each product
-        totalPrice += 5;
+      let itemPrice = product?.basePrice || 0;
+      if (product?.size?.price) {
+        itemPrice += product.size.price;
       }
+      if (product?.extras?.length > 0) {
+        for (const extra of product.extras) {
+          itemPrice += extra?.price || 0;
+        }
+      }
+      const qty = product?.quantity || 1;
+      subtotal += itemPrice * qty;
     });
 
-    console.log("Total Price:", totalPrice);
+    const deliveryFee = subtotal > 499 || subtotal === 0 ? 0 : 49;
+    const grandTotal = subtotal + deliveryFee;
 
-    // Initialize Razorpay with your keys
+    const razorpayKeyId = process.env.NEXT_RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    const razorpaySecret = process.env.NEXT_RAZORPAY_KEY_SECRET;
+
+    if (!razorpayKeyId || !razorpaySecret) {
+      console.error("Razorpay credentials missing in environment variables");
+      return new Response(
+        JSON.stringify({ message: "Payment configuration missing on server." }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Initialize Razorpay with verified keys
     const razorpay = new Razorpay({
-      key_id: process.env.NEXT_RAZORPAY_KEY_ID, 
-      key_secret: process.env.NEXT_RAZORPAY_KEY_SECRET,
-      timeout: 60000 // Timeout in milliseconds (60 seconds)
+      key_id: razorpayKeyId,
+      key_secret: razorpaySecret,
+      timeout: 60000,
     });
-
-    console.log("Razorpay Instance:", razorpay);
-
 
     try {
       const razorpayOrder = await razorpay.orders.create({
-        amount: totalPrice * 100, // Convert amount to paise (multiply by 100)
+        amount: Math.round(grandTotal * 100), // Convert amount to paise
         currency: "INR",
-        receipt: `receipt_${orderDoc._id}`, // Unique receipt ID for this order
+        receipt: `receipt_${orderDoc._id}`,
       });
       
-      console.log("Razorpay Order Created:", razorpayOrder);
+      console.log("Razorpay Order Created successfully:", razorpayOrder.id);
     
-      // Return the Razorpay order ID and DB order ID to the frontend
+      // Return the Razorpay order ID, DB order ID, and public Key ID to the frontend
       return new Response(JSON.stringify({ 
         razorpayOrderId: razorpayOrder.id,
         orderId: orderDoc._id,
+        key: razorpayKeyId,
       }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
       console.error("Error creating Razorpay order:", error);
-      return new Response(JSON.stringify({ message: "Razorpay order creation failed", error }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          message: error?.error?.description || error?.message || "Razorpay order creation failed",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
     }
   } catch (error) {
     console.error("Checkout failed:", error);
-    return new Response(JSON.stringify({ message: "Checkout failed", error }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ message: error?.message || "Checkout failed" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 }
 
