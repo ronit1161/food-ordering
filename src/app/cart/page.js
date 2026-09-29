@@ -7,11 +7,18 @@ import { UseProfile } from "@/components/UseProfile";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
+import Link from "next/link";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const CartPage = () => {
-  const { cartProducts, removeCartProduct, clearCart } = useContext(CartContext); // Use cartProducts
+  const {
+    cartProducts,
+    removeCartProduct,
+    incrementCartProduct,
+    decrementCartProduct,
+    clearCart,
+  } = useContext(CartContext);
   const router = useRouter();
   const session = useSession();
   const { status, data: sessionData } = session;
@@ -36,9 +43,10 @@ const CartPage = () => {
 
   if (status === "loading") {
     return (
-      <section className="mt-8 text-center">
-        <p className="text-gray-500">Loading cart...</p>
-      </section>
+      <div className="py-24 text-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-gray-500 font-medium">Loading your cart...</p>
+      </div>
     );
   }
 
@@ -54,12 +62,20 @@ const CartPage = () => {
     subtotal += cartProductPrice(p);
   }
 
+  const deliveryFee = subtotal > 499 || subtotal === 0 ? 0 : 49;
+  const finalTotal = subtotal + deliveryFee;
+
   function handleAddressChange(propName, value) {
     setAddress((prevAddress) => ({ ...prevAddress, [propName]: value }));
   }
 
   async function proceedToCheckout(ev) {
-    ev.preventDefault(); // Prevent default form submission
+    ev.preventDefault();
+
+    if (typeof window === "undefined" || !window.Razorpay) {
+      toast.error("Payment gateway is still loading. Please wait 2 seconds and try again.");
+      return;
+    }
 
     const promise = new Promise((resolve, reject) => {
       fetch("/api/checkout", {
@@ -72,17 +88,23 @@ const CartPage = () => {
       })
         .then(async (response) => {
           if (response.ok) {
-            const { razorpayOrderId, orderId } = await response.json(); // Get Razorpay order ID and DB order ID
+            const { razorpayOrderId, orderId, key } = await response.json();
             resolve();
 
-            // Initialize Razorpay on the frontend
+            const razorpayKey = key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
             const options = {
-              key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Your public key from Razorpay
-              amount: (subtotal + 5) * 100, // Total amount to be paid in paise (multiply by 100)
+              key: razorpayKey,
+              amount: Math.round(finalTotal * 100),
               currency: "INR",
-              name: "Your Store Name", // Name of your business
-              description: "Order Payment",
-              order_id: razorpayOrderId, // The Razorpay order ID from backend
+              name: "Delight Bites",
+              description: "Food Order Payment",
+              order_id: razorpayOrderId,
+              modal: {
+                ondismiss: function () {
+                  toast.info("Payment window closed.");
+                },
+              },
               handler: async function (response) {
                 const verifyPromise = new Promise(async (resolveVerify, rejectVerify) => {
                   try {
@@ -99,103 +121,173 @@ const CartPage = () => {
                     if (res.ok) {
                       clearCart();
                       resolveVerify();
-                      router.push("/orders/" + orderId);
+                      router.push("/orders/" + orderId + "?clear-cart=1");
                     } else {
-                      rejectVerify();
+                      const errData = await res.json().catch(() => ({}));
+                      rejectVerify(new Error(errData.error || "Payment verification failed"));
                     }
                   } catch (err) {
                     rejectVerify(err);
                   }
                 });
 
-                await toast.promise(verifyPromise, {
-                  loading: "Verifying your payment...",
-                  success: "Payment verified successfully!",
-                  error: "Payment verification failed. Please contact support.",
-                });
+                try {
+                  await toast.promise(verifyPromise, {
+                    pending: "Verifying your payment...",
+                    success: "Payment verified successfully!",
+                    error: {
+                      render({ data }) {
+                        return data?.message || "Payment verification failed. Please contact support.";
+                      },
+                    },
+                  });
+                } catch {}
               },
               prefill: {
-                name: address.name, // Customer's name
-                email: address.email, // Customer's email
-                contact: address.phone, // Customer's phone number
+                name: address.name || sessionData?.user?.name || "",
+                email: address.email || userEmail || "",
+                contact: address.phone || "",
               },
               theme: {
-                color: "#F37254",
+                color: "#FF5722",
               },
             };
 
             const rzp = new window.Razorpay(options);
-            rzp.open(); // Open Razorpay modal
+            rzp.on("payment.failed", function (response) {
+              toast.error(response.error?.description || "Payment failed. Please try a different card or UPI.");
+            });
+            rzp.open();
           } else {
-            reject();
+            const errData = await response.json().catch(() => ({}));
+            reject(new Error(errData.message || "Failed to initialize checkout."));
           }
         })
         .catch(reject);
     });
 
-    await toast.promise(promise, {
-      loading: "Preparing your order...",
-      success: "Redirecting to payment...",
-      error: "Something went wrong... Please try again later",
-    });
+    try {
+      await toast.promise(promise, {
+        pending: "Initializing payment...",
+        success: "Opening Razorpay...",
+        error: {
+          render({ data }) {
+            return data?.message || "Checkout failed. Please try again.";
+          },
+        },
+      });
+    } catch {}
   }
 
   return (
-    <section className="mt-8">
+    <div className="py-8 max-w-6xl mx-auto">
       <Script
         type="text/javascript"
         src="https://checkout.razorpay.com/v1/checkout.js"
-      ></Script>
-      <div className="text-center">
-        <SectionHeaders subHeader="Cart" />
-      </div>
+      />
 
-      <div className="grid grid-cols-2 gap-12 mt-8">
-        <div>
-          {cartProducts?.length === 0 && (
-            <div>No products in your shopping cart</div>
-          )}
-          {cartProducts?.length > 0 &&
-            cartProducts.map((product, index) => (
-              <div
-                className="gap-4 mb-2 border-b py-2 items-center"
-                key={index}
+      <SectionHeaders subHeader="Your Order" mainHeader="Shopping Cart" />
+
+      {cartProducts?.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-4xl border border-orange-100 shadow-card max-w-xl mx-auto my-8 p-8">
+          <div className="text-6xl mb-4">🛒</div>
+          <h3 className="text-2xl font-bold font-display text-gray-900 mb-2">
+            Your cart is hungry!
+          </h3>
+          <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
+            You haven&apos;t added any delicious items yet. Browse our handcrafted menu to satisfy your cravings.
+          </p>
+          <Link
+            href="/menu"
+            className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-bold px-8 py-3.5 rounded-full shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98]"
+          >
+            Explore Menu 🍕
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-8">
+          {/* Cart Items List */}
+          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-card">
+            <div className="flex items-center justify-between pb-4 border-b border-orange-100 mb-4">
+              <h3 className="font-display font-bold text-lg text-gray-900">
+                Cart Items ({cartProducts.reduce((sum, p) => sum + (p.quantity || 1), 0)})
+              </h3>
+              <button
+                onClick={clearCart}
+                className="text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors"
               >
+                Clear All
+              </button>
+            </div>
+
+            <div className="divide-y divide-orange-50 space-y-1">
+              {cartProducts.map((product, index) => (
                 <CartProduct
                   key={index}
                   product={product}
                   onRemove={() => removeCartProduct(index)}
+                  onIncrement={() => incrementCartProduct(index)}
+                  onDecrement={() => decrementCartProduct(index)}
                 />
-              </div>
-            ))}
-          <div className="py-2 pr-16 flex justify-end items-center">
-            <div className="text-gray-500">
-              Subtotal:
-              <br />
-              Delivery:
-              <br />
-              Total:
+              ))}
             </div>
-            <div className="font-semibold pl-2 text-right">
-              ${subtotal}
-              <br />
-              $5
-              <br />${subtotal + 5}
+
+            {/* Bill Summary */}
+            <div className="mt-8 pt-6 border-t border-orange-100 space-y-2.5">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Items Subtotal</span>
+                <span className="font-semibold text-gray-900">₹{subtotal}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Delivery Charges</span>
+                <span>
+                  {deliveryFee === 0 ? (
+                    <span className="text-emerald-600 font-bold">FREE</span>
+                  ) : (
+                    <span className="font-semibold text-gray-900">₹{deliveryFee}</span>
+                  )}
+                </span>
+              </div>
+              {subtotal < 499 && (
+                <p className="text-[11px] text-orange-600 bg-orange-50/80 px-3 py-1.5 rounded-xl border border-orange-200/50">
+                  💡 Add <strong>₹{499 - subtotal}</strong> more to get <strong>FREE delivery</strong>!
+                </p>
+              )}
+              <div className="flex items-center justify-between text-lg font-bold font-display text-gray-950 pt-3 border-t border-dashed border-gray-200">
+                <span>Total Amount</span>
+                <span className="text-2xl text-primary font-extrabold">₹{finalTotal}</span>
+              </div>
             </div>
           </div>
+
+          {/* Delivery & Checkout Form */}
+          <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-card flex flex-col">
+            <h3 className="font-display font-bold text-lg text-gray-900 mb-4 pb-3 border-b border-orange-100">
+              Delivery Details
+            </h3>
+            
+            <form onSubmit={proceedToCheckout} className="space-y-2 flex-1 flex flex-col">
+              <AddressInputs
+                addressProps={address}
+                setAddressProp={handleAddressChange}
+              />
+
+              <div className="pt-4 mt-auto">
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-primary to-orange-500 hover:from-primary-dark hover:to-orange-600 text-white font-bold text-base py-3.5 rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/35 transition-all active:scale-[0.98]"
+                >
+                  Pay ₹{finalTotal} with Razorpay
+                </button>
+                <p className="text-center text-[11px] text-gray-400 mt-3 flex items-center justify-center gap-1">
+                  <span>🔒</span> 256-bit encrypted checkout via Razorpay
+                </p>
+              </div>
+            </form>
+          </div>
         </div>
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <h2>Checkout</h2>
-          <form onSubmit={proceedToCheckout}>
-            <AddressInputs
-              addressProps={address}
-              setAddressProp={handleAddressChange}
-            />
-            <button type="submit">Pay ${subtotal + 5}</button>
-          </form>
-        </div>
-      </div>
-    </section>
+      )}
+    </div>
   );
 };
 
