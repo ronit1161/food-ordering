@@ -1,5 +1,6 @@
+"use client";
 import Image from "next/image";
-import { toast } from "react-toastify"; // Import Toast for notifications
+import { toast } from "react-toastify";
 
 export default function EditableImage({ link, setLink }) {
   const handleFileChange = async (e) => {
@@ -7,29 +8,41 @@ export default function EditableImage({ link, setLink }) {
 
     if (files?.length > 0) {
       const file = files[0];
-
       const data = new FormData();
       data.append("file", file);
 
-      try {
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: data,
-        });
+      const uploadPromise = new Promise(async (resolve, reject) => {
+        try {
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: data,
+          });
 
-        if (!response.ok) {
-          throw new Error("Failed to upload image");
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            reject(new Error(errData.message || "Failed to upload image"));
+            return;
+          }
+
+          const result = await response.json();
+          setLink(result.link);
+          resolve();
+        } catch (err) {
+          reject(err);
         }
+      });
 
-        const result = await response.json();
-        setLink(result.link); // Update the link in the parent component state
-
-        // Show success toast
-        toast.success("Image uploaded successfully!");
-      } catch (error) {
-        // Show error toast
-        toast.error("Image upload failed. Please try again.");
-      }
+      try {
+        await toast.promise(uploadPromise, {
+          pending: "Uploading image...",
+          success: "Image uploaded successfully!",
+          error: {
+            render({ data }) {
+              return data?.message || "Image upload failed. Please try again.";
+            },
+          },
+        });
+      } catch {}
     }
   };
 

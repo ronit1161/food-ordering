@@ -1,26 +1,27 @@
 "use client";
 import UserTabs from "@/components/layout/UserTabs";
+import SectionHeaders from "@/components/layout/SectionHeaders";
 import MenuItemForm from "@/components/layout/MenuItemForm";
 import { UseProfile } from "@/components/UseProfile";
 import DeleteButton from "@/components/DeleteButton";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { redirect, useParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export default function EditMenuItemPage() {
   const { id } = useParams();
-
   const [menuItem, setMenuItem] = useState(null);
-  const [redirectToItems, setRedirectToItems] = useState(false);
-  const { loading, data } = UseProfile();
-  const router = useRouter(); // Initialize useRouter hook
+  const { loading: profileLoading, data: profileData } = UseProfile();
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/menu-items").then((res) => {
       res.json().then((items) => {
-        const item = items.find((i) => i._id === id);
-        setMenuItem(item);
+        if (Array.isArray(items)) {
+          const item = items.find((i) => i._id === id);
+          setMenuItem(item);
+        }
       });
     });
   }, [id]);
@@ -29,79 +30,125 @@ export default function EditMenuItemPage() {
     e.preventDefault();
     data = { ...data, _id: id };
 
-    const savingPromise = new Promise(async (resolve, reject) => {
-      const response = await fetch("/api/menu-items", {
-        method: "PUT",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
+    try {
+      const savingPromise = new Promise(async (resolve, reject) => {
+        try {
+          const response = await fetch("/api/menu-items", {
+            method: "PUT",
+            body: JSON.stringify(data),
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (response.ok) {
+            resolve();
+          } else {
+            const errData = await response.json().catch(() => ({}));
+            reject(new Error(errData.error || errData.message || "Failed to update item."));
+          }
+        } catch (err) {
+          reject(err);
+        }
       });
 
-      if (response.ok) {
-        resolve();
-      } else reject();
-    });
+      await toast.promise(savingPromise, {
+        pending: "Updating dish details...",
+        success: "Dish updated successfully!",
+        error: {
+          render({ data }) {
+            return data?.message || "Couldn't save changes.";
+          },
+        },
+      });
 
-    await toast.promise(savingPromise, {
-      loading: "Saving this tasty item...",
-      success: "Saved",
-      error: "Couldn't save",
-    });
-
-    setRedirectToItems(true);
+      router.push("/menu-items");
+    } catch (err) {
+      console.error("Update error:", err);
+    }
   }
 
   async function handleDeleteClick() {
-    const promise = new Promise(async (resolve, reject) => {
-      const res = await fetch("/api/menu-items?_id=" + id, {
-        method: "DELETE",
+    try {
+      const promise = new Promise(async (resolve, reject) => {
+        try {
+          const res = await fetch("/api/menu-items?_id=" + id, {
+            method: "DELETE",
+          });
+          if (res.ok) {
+            resolve();
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            reject(new Error(errData.error || "Failed to delete item."));
+          }
+        } catch (err) {
+          reject(err);
+        }
       });
-      if (res.ok) {
-        resolve();
-      } else {
-        reject();
-      }
-    });
 
-    await toast.promise(promise, {
-      loading: "Deleting...",
-      success: "Deleted",
-      error: "Unable to delete",
-    });
+      await toast.promise(promise, {
+        pending: "Removing dish...",
+        success: "Dish deleted successfully!",
+        error: {
+          render({ data }) {
+            return data?.message || "Unable to delete dish.";
+          },
+        },
+      });
 
-    setRedirectToItems(true);
+      router.push("/menu-items");
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   }
 
-  // Check for redirect condition
-  if (redirectToItems) {
-    router.push("/menu-items"); // Client-side redirection
+  if (profileLoading) {
+    return (
+      <div className="py-24 text-center text-gray-500">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p>Loading dish information...</p>
+      </div>
+    );
   }
 
-  if (loading) {
-    return "Loading user info...";
-  }
-
-  if (!data.admin) {
-    return "Not an admin...";
+  if (!profileData?.admin) {
+    return (
+      <div className="py-24 text-center text-gray-500">
+        <p className="text-xl font-bold text-gray-900">Access Denied</p>
+        <p className="text-sm mt-1">You must be an administrator to edit menu items.</p>
+      </div>
+    );
   }
 
   return (
-    <section className="mt-8">
+    <section className="py-6 max-w-4xl mx-auto">
       <UserTabs isAdmin={true} />
 
-      <div className="max-w-md mx-auto mt-8 text-center">
-        <Link href={"/menu-items"} className="button">
-          <span>Show all menu items</span>
-        </Link>
-      </div>
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-950 font-display">
+              Edit Menu Item
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
+              Modify dish pricing, ingredients, and portion sizes.
+            </p>
+          </div>
+          <Link
+            href="/menu-items"
+            className="text-xs font-bold text-primary hover:underline"
+          >
+            ← Back to all dishes
+          </Link>
+        </div>
 
-      <MenuItemForm menuItem={menuItem} onSubmit={handleFormSubmit} />
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-card">
+          <MenuItemForm menuItem={menuItem} onSubmit={handleFormSubmit} />
 
-      <div className="max-w-md mx-auto mt-4">
-        <div className="max-w-xs ml-auto mt-4 pl-4">
-          <DeleteButton
-            label="Delete this menu item"
-            onDelete={handleDeleteClick}
-          />
+          <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+            <DeleteButton
+              label="Delete this dish"
+              onDelete={handleDeleteClick}
+            />
+          </div>
         </div>
       </div>
     </section>

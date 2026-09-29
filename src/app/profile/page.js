@@ -4,13 +4,11 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import UserTabs from "@/components/layout/UserTabs";
 import UserForm from "@/components/layout/UserForm";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import SectionHeaders from "@/components/layout/SectionHeaders";
+import { toast } from 'react-toastify';
 
 const ProfilePage = () => {
-
   const session = useSession();
-
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -56,34 +54,35 @@ const ProfilePage = () => {
           setUser(updatedData);
           setIsAdmin(updatedData.admin);
         }
-        toast.success("Profile updated successfully!", {
-          autoClose: 3000,
-        });
+        toast.success("Profile saved successfully!");
       } else {
-        toast.error("Failed to update profile. Please try again.", {
-          autoClose: 3000,
-        });
+        toast.error("Failed to update profile. Please try again.");
       }
     } catch (error) {
-      toast.error("An error occurred. Please try again.", {
-        autoClose: 3000,
-      });
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 
   if (status === "loading") {
-    return "Loading Profile ....";
+    return (
+      <div className="py-24 text-center text-gray-500">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p>Loading your profile...</p>
+      </div>
+    );
   }
 
   return (
-    <section className="mt-8">
+    <section className="py-6 max-w-4xl mx-auto">
       <UserTabs isAdmin={isAdmin} />
 
-      <div className="max-w-2xl mx-auto mt-8">
-        <UserForm user={user} OnSave={handleProfileInfoUpdate} />
+      <div className="mt-8">
+        <SectionHeaders subHeader="Account Settings" mainHeader="Your Profile" />
+        
+        <div className="max-w-2xl mx-auto mt-8 bg-white rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-card">
+          <UserForm user={user} OnSave={handleProfileInfoUpdate} />
+        </div>
       </div>
-
-      <ToastContainer /> {/* Add this to display Toasts */}
     </section>
   );
 };

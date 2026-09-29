@@ -1,11 +1,11 @@
 "use client";
 import UserForm from "@/components/layout/UserForm";
 import UserTabs from "@/components/layout/UserTabs";
+import SectionHeaders from "@/components/layout/SectionHeaders";
 import { UseProfile } from "@/components/UseProfile";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify"; // Import Toast
-import "react-toastify/dist/ReactToastify.css"; // Import CSS for Toast
+import { toast } from "react-toastify";
 
 export default function EditUserPage() {
   const { loading, data } = UseProfile();
@@ -23,42 +23,68 @@ export default function EditUserPage() {
   async function handleSaveButtonClick(e, data) {
     e.preventDefault();
 
-    const promise = new Promise(async (resolve, reject) => {
-      const res = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, _id: id }),
+    try {
+      const promise = new Promise(async (resolve, reject) => {
+        try {
+          const res = await fetch("/api/profile", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...data, _id: id }),
+          });
+          if (res.ok) {
+            resolve();
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            reject(new Error(errData.message || "Failed to update user."));
+          }
+        } catch (err) {
+          reject(err);
+        }
       });
-      if (res.ok) resolve();
-      else reject();
-    });
 
-    await toast.promise(promise, {
-      loading: "Saving User...",
-      success: "User saved successfully",
-      error: "An Error has occurred",
-    });
+      await toast.promise(promise, {
+        pending: "Saving user...",
+        success: "User updated successfully!",
+        error: {
+          render({ data }) {
+            return data?.message || "Failed to update user.";
+          },
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   if (loading) {
-    return "Loading user info ...";
+    return (
+      <div className="py-24 text-center text-gray-500">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p>Loading user profile...</p>
+      </div>
+    );
   }
 
-  if (!data.admin) {
-    return "Not an admin";
-  }
-  return (
-    <section className="mt-8 mx-auto max-w-2xl">
-      <UserTabs isAdmin={true} />
-  
-      <div className="mt-8">
-        <UserForm user={user} OnSave={handleSaveButtonClick} />
+  if (!data?.admin) {
+    return (
+      <div className="py-24 text-center text-gray-500">
+        <p className="text-xl font-bold text-gray-900">Access Denied</p>
+        <p className="text-sm mt-1">You must be an administrator to edit users.</p>
       </div>
-  
-      {/* Add ToastContainer here to render toasts */}
-      <ToastContainer />
+    );
+  }
+
+  return (
+    <section className="py-6 max-w-4xl mx-auto">
+      <UserTabs isAdmin={true} />
+
+      <div className="mt-8">
+        <SectionHeaders subHeader="User Administration" mainHeader="Edit User" />
+
+        <div className="max-w-2xl mx-auto mt-8 bg-white rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-card">
+          <UserForm user={user} OnSave={handleSaveButtonClick} />
+        </div>
+      </div>
     </section>
   );
 }
-
-
